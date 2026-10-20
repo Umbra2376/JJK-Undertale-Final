@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using System.Collections.Generic;
 
 namespace JJK_Undertale_Final
 {
@@ -27,6 +28,7 @@ namespace JJK_Undertale_Final
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
         }
         Battle battle;
+        List<string> skillList = new List<string>();
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
