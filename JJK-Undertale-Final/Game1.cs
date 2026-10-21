@@ -11,10 +11,10 @@ namespace JJK_Undertale_Final
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D titleImg;
+        Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack;
         SpriteFont titleFont;
         Song titleSong;
-        Rectangle window;
+        Rectangle window, dodgeBoxR, soulSpriteR;
         float titleO, titleTime;
         Vector2 openingText, controlsText, skipOption, startOption;
         GamePadState gamePadCurrent, gamePadOld;
@@ -29,6 +29,9 @@ namespace JJK_Undertale_Final
         }
         Battle battle;
         List<string> skillList = new List<string>();
+        List<Texture2D> enemyTextures = new List<Texture2D>();
+        List<Texture2D> backgrounds = new List<Texture2D>();
+        List<Texture2D> punchAnimation = new List<Texture2D>();
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -56,8 +59,22 @@ namespace JJK_Undertale_Final
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             titleImg = Content.Load<Texture2D>("titleScreen");
-            titleSong = Content.Load<Song>("titleTheme");
+            titleSong = Content.Load<Song>("Sounds/titleTheme");
             titleFont = Content.Load<SpriteFont>("titleFont");
+            dodgeBoxT = Content.Load<Texture2D>("dodgeBox");
+            soulSpirteT = Content.Load<Texture2D>("soulSprite");
+
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/firstBattleCurse"));
+
+            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/menuBg"));
+            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle1Bg"));
+
+            enemy1Attack = Content.Load<Texture2D>("EnemyMoves/b1Attack");
+
+            for (int i = 1; i < 6; i++)
+            {
+                punchAnimation.Add(Content.Load<Texture2D>("charAttacks/punch" + i));
+            }
             MediaPlayer.Volume = 0.6f;
             // TODO: use this.Content to load your game content here
         }
@@ -97,12 +114,18 @@ namespace JJK_Undertale_Final
                     titleTime = 0f;
                 }
             }
-            if (screen == Screen.Opening)
+            else if (screen == Screen.Opening)
             {
                 titleTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 openingText.Y -= 2;
                 if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     titleTime = 22.1f;
+                if (gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
+                {
+                    screen = Screen.Battle;
+                    battle = Battle.b1;
+                    titleTime = 0f;
+                }
             }
             base.Update(gameTime);
         }
@@ -122,6 +145,15 @@ namespace JJK_Undertale_Final
             if (screen == Screen.Opening)
             {
                 DrawOpeningText();
+            }
+            if (screen == Screen.Battle)
+            {
+                if (battle == Battle.b1)
+                {
+                    _spriteBatch.Draw(backgrounds[1], window, Color.White);
+                    _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 300, 400, 400), Color.White);
+                    _spriteBatch.DrawString(titleFont, "A grade 4 curse has appeared!", new Vector2(startOption.X, 50), Color.White);
+                }
             }
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -147,6 +179,7 @@ namespace JJK_Undertale_Final
                 _spriteBatch.DrawString(titleFont, "Select = A", new Vector2(controlsText.X, controlsText.Y + 90), Color.White);
                 _spriteBatch.DrawString(titleFont, "Back = B", new Vector2(controlsText.X, controlsText.Y + 180), Color.White);
                 _spriteBatch.DrawString(titleFont, "Exit = Z (on the back)", new Vector2(controlsText.X, controlsText.Y + 270), Color.White);
+                _spriteBatch.DrawString(titleFont, "Press START to start", startOption, Color.White);
             }
         }
     }
