@@ -4,18 +4,20 @@ using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System.Collections.Generic;
+using System;
 
 namespace JJK_Undertale_Final
 {
     public class Game1 : Game
     {
+        Random random = new Random();
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack;
         SpriteFont titleFont;
         Song titleSong;
         Rectangle window, dodgeBoxR, soulSpriteR;
-        float titleO, titleTime;
+        float titleO, titleTime, invincibilityTime;
         Vector2 openingText, controlsText, skipOption, startOption;
         GamePadState gamePadCurrent, gamePadOld;
         enum Screen
@@ -32,6 +34,17 @@ namespace JJK_Undertale_Final
         List<Texture2D> enemyTextures = new List<Texture2D>();
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
+
+        List<b1Projectile> b1Projectiles = new List<b1Projectile>();
+        float projectileSpeed = 180f;
+        float projectileTime = 0f;
+        float projectileInterval = 1.3f;
+
+        float soulSpeed = 300f;
+        float dodgeTime = 15f;
+        int charHealth = 100, charHealthMax = 100;
+        bool dodgePhase = true;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -52,6 +65,8 @@ namespace JJK_Undertale_Final
             skipOption = new Vector2(950, 800);
             startOption = new Vector2(400, 800);
 
+            dodgeBoxR = new Rectangle(450, 450, 600, 350);
+            soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 30, 30);
             base.Initialize();
         }
 
@@ -127,7 +142,46 @@ namespace JJK_Undertale_Final
                     titleTime = 0f;
                 }
             }
-            base.Update(gameTime);
+            else if (screen == Screen.Battle)
+            {
+                float battleTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                if (battle == Battle.b1 && dodgePhase)
+                {
+                    Vector2 movement = gamePadCurrent.ThumbSticks.Left;
+                    movement.Y *= -1;
+
+                    if (movement.LengthSquared() > 1f)
+                        movement.Normalize();
+                    soulSpriteR.X += (int)(movement.X * soulSpeed * battleTime);
+                    soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
+                    projectileTime += battleTime;
+                    
+                    if (projectileTime >= projectileInterval)
+                    {
+                        SpawnProjectiles();
+                        projectileTime = 0f;
+                    }
+
+                    for (int i = b1Projectiles.Count - 1; i >= 0; i--)
+                    {
+                        b1Projectile b1projectile = b1Projectiles[i];
+                        b1projectile.Position += b1projectile.Direction * projectileSpeed * battleTime;
+
+                        Rectangle b1projectileR = new Rectangle((int)b1projectile.Position.X - 12, (int)b1projectile.Position.Y - 12, 24, 24);
+
+                        if (b1projectileR.Intersects(soulSpriteR) && invincibilityTime <= 0f)
+                        {
+                            charHealth -= 10;
+                            invincibilityTime = 1f;
+
+                            b1Projectiles.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                }
+            }
+                base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
@@ -181,6 +235,36 @@ namespace JJK_Undertale_Final
                 _spriteBatch.DrawString(titleFont, "Exit = Z (on the back)", new Vector2(controlsText.X, controlsText.Y + 270), Color.White);
                 _spriteBatch.DrawString(titleFont, "Press START to start", startOption, Color.White);
             }
+        }
+        void SpawnProjectiles()
+        {
+            Vector2 spawnPosition = Vector2.Zero;
+            int side = random.Next(4);
+            switch (side)
+            {
+                case 0:
+                    spawnPosition = new Vector2(random.Next(dodgeBoxR.Left, dodgeBoxR.Right), dodgeBoxR.Top - 40);
+                    break;
+
+                case 1:
+                    spawnPosition = new Vector2(random.Next(dodgeBoxR.Left, dodgeBoxR.Right), dodgeBoxR.Bottom + 40);
+                    break;
+
+                case 2:
+                    spawnPosition = new Vector2(dodgeBoxR.Left - 40, random.Next(dodgeBoxR.Top, dodgeBoxR.Bottom));
+                    break;
+                
+                case 3:
+                    spawnPosition = new Vector2(dodgeBoxR.Right - 40, random.Next(dodgeBoxR.Top, dodgeBoxR.Bottom));
+                    break;
+            }
+            Vector2 soulCenter = new Vector2(soulSpriteR.Center.X, soulSpriteR.Center.Y);
+            Vector2 direction = soulCenter - spawnPosition;
+            direction.Normalize();
+
+            float rotation = (float)Math.Atan2(direction.X, direction.Y);
+
+            b1Projectiles.Add(new b1Projectile(spawnPosition, direction, rotation));
         }
     }
 }
