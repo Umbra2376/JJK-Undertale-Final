@@ -13,10 +13,10 @@ namespace JJK_Undertale_Final
         Random random = new Random();
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack;
+        Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, barTexture;
         SpriteFont titleFont;
         Song titleSong;
-        Rectangle window, dodgeBoxR, soulSpriteR;
+        Rectangle window, dodgeBoxR, soulSpriteR, charHR, charHBarR, charCEBarR, enemyHBarR, healthBox, battleMenu;
         float titleO, titleTime, invincibilityTime;
         Vector2 openingText, controlsText, skipOption, startOption;
         GamePadState gamePadCurrent, gamePadOld;
@@ -36,9 +36,9 @@ namespace JJK_Undertale_Final
         List<Texture2D> punchAnimation = new List<Texture2D>();
 
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
-        float projectileSpeed = 180f;
+        float projectileSpeed = 300f;
         float projectileTime = 0f;
-        float projectileInterval = 1.3f;
+        float projectileInterval = 0.8f;
 
         float soulSpeed = 300f;
         float dodgeTime = 15f;
@@ -65,7 +65,12 @@ namespace JJK_Undertale_Final
             skipOption = new Vector2(950, 800);
             startOption = new Vector2(400, 800);
 
-            dodgeBoxR = new Rectangle(450, 400, 700, 400);
+            dodgeBoxR = new Rectangle(400, 400, 700, 300);
+            charHR = new Rectangle(370, 775, 450, 150);
+            charHBarR = new Rectangle(400, 805, 400, 90);
+            healthBox = new Rectangle(-40, 750, 1575, 250);
+            battleMenu = new Rectangle(-60, 400, 1625, 650);
+            
             soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 30, 30);
             base.Initialize();
         }
@@ -78,8 +83,15 @@ namespace JJK_Undertale_Final
             titleFont = Content.Load<SpriteFont>("titleFont");
             dodgeBoxT = Content.Load<Texture2D>("dodgeBox");
             soulSpirteT = Content.Load<Texture2D>("soulSprite");
+            emptyBox = Content.Load<Texture2D>("emptySlot");
 
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/firstBattleCurse"));
+
+            charHBarT = Content.Load<Texture2D>("charHealth");
+            charCEBarT = Content.Load<Texture2D>("CEbar");
+            barTexture = Content.Load<Texture2D>("tile");
+            punchSelection = Content.Load<Texture2D>("Options/punchOption");
+            enemyHBarT = Content.Load<Texture2D>("enemyHealth");
 
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/menuBg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle1Bg"));
@@ -166,12 +178,13 @@ namespace JJK_Undertale_Final
                         movement.Normalize();
 
                     soulSpriteR.X += (int)(movement.X * soulSpeed * battleTime);
-                    if (soulSpriteR.Left > dodgeBoxR.Left)
+                    soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
+
+                    if (soulSpriteR.Left < dodgeBoxR.Left)
                         soulSpriteR.X = dodgeBoxR.Left;
                     if (soulSpriteR.Right > dodgeBoxR.Right)
                         soulSpriteR.X = dodgeBoxR.Right - soulSpriteR.Width;
-                    soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
-                    if (soulSpriteR.Top > dodgeBoxR.Top)
+                    if (soulSpriteR.Top < dodgeBoxR.Top)
                         soulSpriteR.Y = dodgeBoxR.Top;
                     if (soulSpriteR.Bottom > dodgeBoxR.Bottom)
                         soulSpriteR.Y = dodgeBoxR.Bottom - soulSpriteR.Height;
@@ -260,15 +273,23 @@ namespace JJK_Undertale_Final
                     }
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
                         _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
+                    _spriteBatch.Draw(emptyBox, healthBox, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.Green);
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
                 }
             }
             if (screen == Screen.Select)
             {
-                _spriteBatch.Draw(backgrounds[1], window, Color.White);
-                _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
-                _spriteBatch.DrawString(titleFont, "You survived the curse's attack!", new Vector2(350, 450), Color.White);
-                _spriteBatch.DrawString(titleFont, "Press A to continue", new Vector2(450, 650), Color.White);
+                if (battle == Battle.b1)
+                {
+                    _spriteBatch.Draw(backgrounds[1], window, Color.White);
+                    _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                }
             }
             _spriteBatch.End();
             base.Draw(gameTime);
