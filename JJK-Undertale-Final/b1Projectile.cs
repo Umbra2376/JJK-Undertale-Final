@@ -31,5 +31,10 @@ namespace JJK_Undertale_Final
             get { return _direction; }
             set { _direction = value; }
         }
+        public float Rotation
+        {
+            get { return _rotation; }
+            set { _rotation = value; }
+        }
     }
 }
