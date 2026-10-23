@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Microsoft.Xna.Framework.Input;
@@ -65,7 +65,7 @@ namespace JJK_Undertale_Final
             skipOption = new Vector2(950, 800);
             startOption = new Vector2(400, 800);
 
-            dodgeBoxR = new Rectangle(450, 450, 600, 350);
+            dodgeBoxR = new Rectangle(450, 400, 700, 400);
             soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 30, 30);
             base.Initialize();
         }
@@ -131,17 +131,28 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Opening)
             {
-                titleTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                openingText.Y -= 2;
-                if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                titleTime += deltaTime;
+                if (titleTime <= 22f)
+                    openingText.Y -= 120f * deltaTime;
+                if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
                     titleTime = 22.1f;
-                if (gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
+
+                if (titleTime > 22f && gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
                 {
                     screen = Screen.Battle;
                     battle = Battle.b1;
-                    titleTime = 0f;
+
+                    dodgePhase = true;
+                    dodgeTime = 15f;
+                    projectileTime = 0f;
+                    invincibilityTime = 0f;
+
+                    b1Projectiles.Clear();
                 }
             }
+            
             else if (screen == Screen.Battle)
             {
                 float battleTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -153,10 +164,14 @@ namespace JJK_Undertale_Final
 
                     if (movement.LengthSquared() > 1f)
                         movement.Normalize();
+
                     soulSpriteR.X += (int)(movement.X * soulSpeed * battleTime);
                     soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
+
+                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - soulSpriteR.Width);
+                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - soulSpriteR.Height);
+
                     projectileTime += battleTime;
-                    
                     if (projectileTime >= projectileInterval)
                     {
                         SpawnProjectiles();
@@ -165,20 +180,48 @@ namespace JJK_Undertale_Final
 
                     for (int i = b1Projectiles.Count - 1; i >= 0; i--)
                     {
-                        b1Projectile b1projectile = b1Projectiles[i];
-                        b1projectile.Position += b1projectile.Direction * projectileSpeed * battleTime;
-
-                        Rectangle b1projectileR = new Rectangle((int)b1projectile.Position.X - 12, (int)b1projectile.Position.Y - 12, 24, 24);
-
-                        if (b1projectileR.Intersects(soulSpriteR) && invincibilityTime <= 0f)
+                        b1Projectile projectile = b1Projectiles[i];
+                        projectile.Position += projectile.Direction * projectileSpeed * battleTime;
+                        Rectangle projectileR = new Rectangle((int)projectile.Position.X - 12, (int)projectile.Position.Y - 12, 24, 24);
+                        if (projectileR.Intersects(soulSpriteR) && invincibilityTime <= 0f)
                         {
                             charHealth -= 10;
                             invincibilityTime = 1f;
-
                             b1Projectiles.RemoveAt(i);
                             continue;
                         }
+
+                        if (projectile.Position.X < dodgeBoxR.Left - 60 || projectile.Position.X > dodgeBoxR.Right + 60 || projectile.Position.Y < dodgeBoxR.Top - 60 || projectile.Position.Y > dodgeBoxR.Bottom + 60)
+                        {
+                            b1Projectiles.RemoveAt(i);
+                        }
                     }
+
+                    if (invincibilityTime > 0f)
+                        invincibilityTime -= battleTime;
+                    dodgeTime -= battleTime;
+
+                    if (charHealth <= 0)
+                        screen = Screen.Lose;
+                    else if (dodgeTime <= 0f)
+                    {
+                        dodgePhase = false;
+                        b1Projectiles.Clear();
+                        screen = Screen.Select;
+                    }
+                }
+            }
+
+            else if (screen == Screen.Select)
+            {
+                if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                {
+                    screen = Screen.Battle;
+
+                    dodgePhase = true;
+                    dodgeTime = 15f;
+                    projectileTime = 0f;
+                    b1Projectiles.Clear();
                 }
             }
                 base.Update(gameTime);
@@ -205,9 +248,24 @@ namespace JJK_Undertale_Final
                 if (battle == Battle.b1)
                 {
                     _spriteBatch.Draw(backgrounds[1], window, Color.White);
-                    _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 300, 400, 400), Color.White);
-                    _spriteBatch.DrawString(titleFont, "A grade 4 curse has appeared!", new Vector2(startOption.X, 50), Color.White);
+                    _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.DrawString(titleFont, "A grade 4 curse has appeared!", new Vector2(400, 30), Color.White);
+                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White);
+                    foreach (b1Projectile b1projectile in b1Projectiles)
+                    {
+                        _spriteBatch.Draw(enemy1Attack, b1projectile.Position, null, Color.White, b1projectile.Rotation, new Vector2(enemy1Attack.Width / 2f, enemy1Attack.Height / 2f), 0.5f, SpriteEffects.None, 0f);
+                    }
+                    if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
+                        _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                 }
+            }
+            if (screen == Screen.Select)
+            {
+                _spriteBatch.Draw(backgrounds[1], window, Color.White);
+                _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
+                _spriteBatch.DrawString(titleFont, "You survived the curse's attack!", new Vector2(350, 450), Color.White);
+                _spriteBatch.DrawString(titleFont, "Press A to continue", new Vector2(450, 650), Color.White);
             }
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -255,14 +313,14 @@ namespace JJK_Undertale_Final
                     break;
                 
                 case 3:
-                    spawnPosition = new Vector2(dodgeBoxR.Right - 40, random.Next(dodgeBoxR.Top, dodgeBoxR.Bottom));
+                    spawnPosition = new Vector2(dodgeBoxR.Right + 40, random.Next(dodgeBoxR.Top, dodgeBoxR.Bottom));
                     break;
             }
             Vector2 soulCenter = new Vector2(soulSpriteR.Center.X, soulSpriteR.Center.Y);
             Vector2 direction = soulCenter - spawnPosition;
             direction.Normalize();
 
-            float rotation = (float)Math.Atan2(direction.X, direction.Y);
+            float rotation = (float)Math.Atan2(direction.Y, direction.X);
 
             b1Projectiles.Add(new b1Projectile(spawnPosition, direction, rotation));
         }
