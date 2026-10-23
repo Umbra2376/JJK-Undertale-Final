@@ -156,7 +156,7 @@
 /processorParam:Version=3.8.5.1
 /build:charHealth
 
-#begin dodgeBox
+#begin dodgeBox.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -167,7 +167,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:dodgeBox
+/build:dodgeBox.psd
 
 #begin emptySlot
 /importer:TextureImporter

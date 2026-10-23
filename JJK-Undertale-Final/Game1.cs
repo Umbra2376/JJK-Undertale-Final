@@ -136,7 +136,7 @@ namespace JJK_Undertale_Final
                 titleTime += deltaTime;
                 if (titleTime <= 22f)
                     openingText.Y -= 120f * deltaTime;
-                if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     titleTime = 22.1f;
 
                 if (titleTime > 22f && gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
@@ -166,10 +166,15 @@ namespace JJK_Undertale_Final
                         movement.Normalize();
 
                     soulSpriteR.X += (int)(movement.X * soulSpeed * battleTime);
+                    if (soulSpriteR.Left > dodgeBoxR.Left)
+                        soulSpriteR.X = dodgeBoxR.Left;
+                    if (soulSpriteR.Right > dodgeBoxR.Right)
+                        soulSpriteR.X = dodgeBoxR.Right - soulSpriteR.Width;
                     soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
-
-                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - soulSpriteR.Width);
-                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - soulSpriteR.Height);
+                    if (soulSpriteR.Top > dodgeBoxR.Top)
+                        soulSpriteR.Y = dodgeBoxR.Top;
+                    if (soulSpriteR.Bottom > dodgeBoxR.Bottom)
+                        soulSpriteR.Y = dodgeBoxR.Bottom - soulSpriteR.Height;
 
                     projectileTime += battleTime;
                     if (projectileTime >= projectileInterval)
@@ -192,9 +197,7 @@ namespace JJK_Undertale_Final
                         }
 
                         if (projectile.Position.X < dodgeBoxR.Left - 60 || projectile.Position.X > dodgeBoxR.Right + 60 || projectile.Position.Y < dodgeBoxR.Top - 60 || projectile.Position.Y > dodgeBoxR.Bottom + 60)
-                        {
                             b1Projectiles.RemoveAt(i);
-                        }
                     }
 
                     if (invincibilityTime > 0f)
@@ -214,7 +217,7 @@ namespace JJK_Undertale_Final
 
             else if (screen == Screen.Select)
             {
-                if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                 {
                     screen = Screen.Battle;
 
