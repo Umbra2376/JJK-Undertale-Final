@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System.Collections.Generic;
 using System;
+using System.Data;
 
 namespace JJK_Undertale_Final
 {
@@ -22,7 +23,7 @@ namespace JJK_Undertale_Final
         GamePadState gamePadCurrent, gamePadOld;
         enum Screen
         {
-            Title, Opening, Menu, Battle, Select, Win, Lose
+            Title, Opening, Menu, Battle, Select, SkillWeaponSelect, Win, Lose
         }
         Screen screen = Screen.Title;
         enum Battle
@@ -31,6 +32,7 @@ namespace JJK_Undertale_Final
         }
         Battle battle;
         List<string> skillList = new List<string>();
+        List<string> weaponList = new List<string>();
         List<Texture2D> enemyTextures = new List<Texture2D>();
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
@@ -44,6 +46,14 @@ namespace JJK_Undertale_Final
         float dodgeTime = 15f;
         int charHealth = 100, charHealthMax = 100;
         bool dodgePhase = true;
+        int enemyHealth = 100, enemyHealthMax = 100;
+        Rectangle enemyHR;
+        Rectangle punchOptionR = new Rectangle(550, 550, 400, 120);
+        int punchFrame;
+        bool isPunching = false;
+        float punchTimer = 0f;
+        float punchFrameDuration = 0.12f;
+        int punchDamage = 20;
 
         public Game1()
         {
@@ -70,6 +80,40 @@ namespace JJK_Undertale_Final
             charHBarR = new Rectangle(400, 805, 400, 90);
             healthBox = new Rectangle(-40, 750, 1575, 250);
             battleMenu = new Rectangle(-60, 400, 1625, 650);
+            enemyHR = new Rectangle(525, -15, 450, 150);
+            enemyHBarR = new Rectangle(537, 48, 425, 30);
+
+            skillList.Add("Exploding Flesh");
+            skillList.Add("Straw Doll");
+            skillList.Add("Miracle");
+            skillList.Add("Ice");
+            skillList.Add("Blood");
+            skillList.Add("Projection");
+            skillList.Add("Ratio");
+            skillList.Add("RCT");
+            skillList.Add("Curse Control");
+            skillList.Add("Bug Armour");
+            skillList.Add("Granite Blast");
+            skillList.Add("Dismantle");
+            skillList.Add("Cleave");
+            skillList.Add("Red");
+            skillList.Add("Blue");
+            skillList.Add("Beast Amber");
+            skillList.Add("Fuga");
+            skillList.Add("Hollow Purple");
+
+            weaponList.Add("Slaughter Demon");
+            weaponList.Add("Hand Sword");
+            weaponList.Add("Basic Katana");
+            weaponList.Add("Cursed Spear");
+            weaponList.Add("Ratio Knife");
+            weaponList.Add("Very Cursed Sword");
+            weaponList.Add("Mallet");
+            weaponList.Add("Dragon-Bone");
+            weaponList.Add("Split Soul");
+            weaponList.Add("Festering Life");
+            weaponList.Add("Playful Cloud");
+            weaponList.Add("Inverted Spear");
             
             soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 30, 30);
             base.Initialize();
@@ -162,6 +206,11 @@ namespace JJK_Undertale_Final
                     invincibilityTime = 0f;
 
                     b1Projectiles.Clear();
+                    charHealth = charHealthMax;
+                    enemyHealth = enemyHealthMax;
+                    isPunching = false;
+                    punchFrame = 0;
+                    punchTimer = 0f;
                 }
             }
             
@@ -230,14 +279,44 @@ namespace JJK_Undertale_Final
 
             else if (screen == Screen.Select)
             {
-                if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (!isPunching && gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
                 {
-                    screen = Screen.Battle;
+                    isPunching = true;
+                    punchFrame = 0;
+                    punchTimer = 0f;
+                }
 
-                    dodgePhase = true;
-                    dodgeTime = 15f;
-                    projectileTime = 0f;
-                    b1Projectiles.Clear();
+                if (isPunching)
+                {
+                    punchTimer += deltaTime;
+                    if (punchTimer >= punchFrameDuration)
+                    {
+                        punchTimer = 0f;
+                        punchFrame++;
+
+                        if (punchFrame >= punchAnimation.Count)
+                        {
+                            isPunching = false;
+                            punchFrame = 0;
+                            enemyHealth -= punchDamage;
+
+                            if (enemyHealth < 0)
+                                enemyHealth = 0;
+
+                            if (enemyHealth <= 0)
+                                screen = Screen.Win;
+                            else
+                            {
+                                screen = Screen.Battle;
+                                dodgePhase = true;
+                                dodgeTime = 15f;
+                                projectileTime = 0f;
+
+                                b1Projectiles.Clear();
+                            }
+                        }
+                    }
                 }
             }
                 base.Update(gameTime);
@@ -265,7 +344,12 @@ namespace JJK_Undertale_Final
                 {
                     _spriteBatch.Draw(backgrounds[1], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
-                    _spriteBatch.DrawString(titleFont, "A grade 4 curse has appeared!", new Vector2(400, 30), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White);
                     foreach (b1Projectile b1projectile in b1Projectiles)
                     {
@@ -274,7 +358,10 @@ namespace JJK_Undertale_Final
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
                         _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
                     _spriteBatch.Draw(emptyBox, healthBox, Color.White);
-                    _spriteBatch.Draw(barTexture, charHBarR, Color.Green);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)Math.Max(0, charHealth) / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
                 }
@@ -285,10 +372,26 @@ namespace JJK_Undertale_Final
                 {
                     _spriteBatch.Draw(backgrounds[1], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                        _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
-                    _spriteBatch.Draw(barTexture, charHBarR, Color.Green);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)Math.Max(0, charHealth) / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                    if (isPunching)
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
+                    else
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
+                    if (isPunching && punchAnimation.Count > 0)
+                        _spriteBatch.Draw(punchAnimation[punchFrame], new Rectangle(550, 100, 400, 300), Color.White);
                 }
             }
             _spriteBatch.End();
