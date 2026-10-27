@@ -6,6 +6,9 @@ using Microsoft.Xna.Framework.Media;
 using System.Collections.Generic;
 using System;
 using System.Data;
+using System.Security.Cryptography.X509Certificates;
+using System.ComponentModel.Design;
+using System.Reflection.Metadata;
 
 namespace JJK_Undertale_Final
 {
@@ -21,6 +24,7 @@ namespace JJK_Undertale_Final
         float titleO, titleTime, invincibilityTime;
         Vector2 openingText, controlsText, skipOption, startOption, skillSelectText, weaponSelectText;
         GamePadState gamePadCurrent, gamePadOld;
+        charAttack playerAttack;
         enum Screen
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose
@@ -51,13 +55,9 @@ namespace JJK_Undertale_Final
         int enemyHealth = 100, enemyHealthMax = 100;
         Rectangle enemyHR;
         Rectangle punchOptionR = new Rectangle(550, 550, 400, 120);
-        int punchFrame;
-        bool isPunching = false;
-        float punchTimer = 0f;
-        float punchFrameDuration = 0.12f;
-        int punchDamage = 20;
 
         int obtainedSkill, obtainedWeapon, skillRarity, weaponRarity;
+        bool rewardsGenerated = false;
 
         public Game1()
         {
@@ -88,7 +88,7 @@ namespace JJK_Undertale_Final
             enemyHBarR = new Rectangle(537, 48, 425, 30);
 
             skillBox = new Rectangle(100, 200, 500, 500);
-            weaponBox = new Rectangle(900, 200, 500, 500);
+            weaponBox = new Rectangle(800, 200, 500, 500);
             skillSelectText = new Vector2(40, 750);
             weaponSelectText = new Vector2(800, 750);
             
@@ -155,6 +155,7 @@ namespace JJK_Undertale_Final
             {
                 punchAnimation.Add(Content.Load<Texture2D>("charAttacks/punch" + i));
             }
+            playerAttack = new charAttack(punchAnimation);
             MediaPlayer.Volume = 0.6f;
             // TODO: use this.Content to load your game content here
         }
@@ -217,9 +218,7 @@ namespace JJK_Undertale_Final
                     b1Projectiles.Clear();
                     charHealth = charHealthMax;
                     enemyHealth = enemyHealthMax;
-                    isPunching = false;
-                    punchFrame = 0;
-                    punchTimer = 0f;
+                    playerAttack.Reset();
                 }
             }
             
@@ -288,52 +287,149 @@ namespace JJK_Undertale_Final
 
             else if (screen == Screen.Select)
             {
-                float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (!isPunching && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
-                {
-                    isPunching = true;
-                    punchFrame = 0;
-                    punchTimer = 0f;
-                }
+                if (!playerAttack._isPunching && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    playerAttack.Start();
 
-                if (isPunching)
+                if (playerAttack.Update(gameTime))
                 {
-                    punchTimer += deltaTime;
-                    if (punchTimer >= punchFrameDuration)
+                    enemyHealth -= playerAttack._damage;
+                    if (enemyHealth < 0)
+                        enemyHealth = 0;
+                    if (charHealth <= 0)
+                        charHealth = 0;
+
+                    if (enemyHealth <= 0)
                     {
-                        punchTimer = 0f;
-                        punchFrame++;
-
-                        if (punchFrame >= punchAnimation.Count)
-                        {
-                            isPunching = false;
-                            punchFrame = 0;
-                            enemyHealth -= punchDamage;
-
-                            if (enemyHealth < 0)
-                                enemyHealth = 0;
-                            if (charHealth <= 0)
-                                charHealth = 0;
-
-                            if (enemyHealth <= 0)
-                                screen = Screen.BattleRewards;
-                            else if (charHealth <= 0)
-                                screen = Screen.Lose;
-                            else
-                            {
-                                screen = Screen.Battle;
-                                dodgePhase = true;
-                                dodgeTime = 15f;
-                                projectileTime = 0f;
-                                b1Projectiles.Clear();
-                            }
-                        }
+                        rewardsGenerated = false;
+                        screen = Screen.BattleRewards;
+                    }
+                    else if (charHealth <= 0)
+                        screen = Screen.Lose;
+                    else
+                    {
+                        screen = Screen.Battle;
+                        dodgePhase = true;
+                        dodgeTime = 15f;
+                        projectileTime = 0f;
+                        b1Projectiles.Clear();
                     }
                 }
             }
             else if (screen == Screen.BattleRewards)
             {
+                if (!rewardsGenerated)
+                {
+                    skillRarity = randomSkill.Next(1, 101);
+                    weaponRarity = randomWeapon.Next(1, 101);
 
+                    if (skillRarity <= 55)
+                        obtainedSkill = randomSkill.Next(1, 4);
+                    else if (skillRarity <= 80)
+                        obtainedSkill = randomSkill.Next(1, 5);
+                    else if (skillRarity <= 95)
+                        obtainedSkill = randomSkill.Next(1, 5);
+                    else if (skillRarity <= 100 && skillRarity > 95)
+                        obtainedSkill = randomSkill.Next(1, 6);
+
+                    if (weaponRarity <= 55)
+                        obtainedWeapon = randomWeapon.Next(1, 5);
+                    else if (weaponRarity <= 80)
+                        obtainedWeapon = randomWeapon.Next(1, 4);
+                    else if (weaponRarity <= 95)
+                        obtainedWeapon = randomWeapon.Next(1, 4);
+                    else if (weaponRarity <= 100)
+                        obtainedWeapon = randomWeapon.Next(1, 3);
+                    rewardsGenerated = true;
+                    if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    {
+                        if (skillRarity <= 55)
+                        {
+                            if (obtainedSkill == 1 && !skillList.Contains("explodingFlesh"))
+                                skillList.Add("explodingFlesh");
+                            else if (obtainedSkill == 2 && !skillList.Contains("strawDoll"))
+                                skillList.Add("strawDoll");
+                            else if (obtainedSkill == 3 && !skillList.Contains("miracle"))
+                                skillList.Add("miracle");
+                        }
+                        else if (skillRarity <= 80)
+                        {
+                            if (obtainedSkill == 1 && !skillList.Contains("ice"))
+                                skillList.Add("ice");
+                            else if (obtainedSkill == 2 && !skillList.Contains("blood"))
+                                skillList.Add("blood");
+                            else if (obtainedSkill == 3 && !skillList.Contains("projection"))
+                                skillList.Add("projection");
+                            else if (obtainedSkill == 4 && !skillList.Contains("ratio"))
+                                skillList.Add("ratio");
+                        }
+                        else if (skillRarity <= 95)
+                        {
+                            if (obtainedSkill == 1 && !skillList.Contains("RCT"))
+                                skillList.Add("RCT");
+                            else if (obtainedSkill == 2 && !skillList.Contains("cursedControl"))
+                                skillList.Add("curseControl");
+                            else if (obtainedSkill == 3 && !skillList.Contains("bugArmour"))
+                                skillList.Add("bugArmour");
+                            else if (obtainedSkill == 4 && !skillList.Contains("graniteBlast"))
+                                skillList.Add("graniteBlast");
+                        }
+                        else if (skillRarity <= 100 && skillRarity > 95)
+                        {
+                            if (obtainedSkill == 1 && !skillList.Contains("dismantle"))
+                                skillList.Add("dismantle");
+                            else if (obtainedSkill == 2 && !skillList.Contains("cleave"))
+                                skillList.Add("cleave");
+                            else if (obtainedSkill == 3 && !skillList.Contains("beastAmber"))
+                                skillList.Add("beastAmber");
+                            else if (obtainedSkill == 4 && !skillList.Contains("blue"))
+                                skillList.Add("blue");
+                            else if (obtainedSkill == 5 && !skillList.Contains("red"))
+                                skillList.Add("red");
+                        }
+
+                        if (weaponRarity <= 55)
+                        {
+                            if (obtainedWeapon == 1 && !weaponList.Contains("slaughterDemon"))
+                                weaponList.Add("slaughterDemon");
+                            else if (obtainedWeapon == 2 && !weaponList.Contains("handSword"))
+                                weaponList.Add("handSword");
+                            else if (obtainedWeapon == 3 && !weaponList.Contains("basicKatana"))
+                                weaponList.Add("basicKatana");
+                            else if (obtainedWeapon == 4 && !weaponList.Contains("cursedSpear"))
+                                weaponList.Add("cursedSpear");
+                        }
+                        else if (weaponRarity <= 80)
+                        {
+                            if (obtainedWeapon == 1 && !weaponList.Contains("ratioKnife"))
+                                weaponList.Add("ratioKnife");
+                            else if (obtainedWeapon == 2 && !weaponList.Contains("cursedSword"))
+                                weaponList.Add("cursedSword");
+                            else if (obtainedWeapon == 3 && !weaponList.Contains("mallet"))
+                                weaponList.Add("mallet");
+                        }
+                        else if (weaponRarity <= 95)
+                        {
+                            if (obtainedWeapon == 1 && !weaponList.Contains("dragonBone"))
+                                weaponList.Add("dragonBone");
+                            else if (obtainedWeapon == 2 && !weaponList.Contains("soulSplit"))
+                                weaponList.Add("soulSplit");
+                            else if (obtainedSkill == 3 && !weaponList.Contains("festeringLife"))
+                                weaponList.Add("festeringLife");
+                        }
+                        else if (weaponRarity <= 100)
+                        {
+                            if (obtainedWeapon == 1 && !weaponList.Contains("playfulCloud"))
+                                weaponList.Add("playfulCloud");
+                            else if (obtainedWeapon == 2 && !weaponList.Contains("invertedSpear"))
+                                weaponList.Add("invertedSpear");
+                        }
+                        if (skillList.Contains("dismantle") && skillList.Contains("cleave") && !skillList.Contains("fuga"))
+                            skillList.Add("fuga");
+                        if (skillList.Contains("blue") && skillList.Contains("red") && !skillList.Contains("purple"))
+                            skillList.Add("purple");
+                        screen = Screen.Menu;
+                    }
+                }
             }
                 base.Update(gameTime);
         }
@@ -401,21 +497,18 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
-                    if (isPunching)
+                    if (playerAttack._isPunching)
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
                     else
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
-                    if (isPunching && punchAnimation.Count > 0)
-                        _spriteBatch.Draw(punchAnimation[punchFrame], new Rectangle(700, 100, 200, 300), Color.White);
+                    playerAttack.Draw(_spriteBatch);
                 }
             }
             if (screen == Screen.BattleRewards)
             {
                 _spriteBatch.Draw(dodgeBoxT, window, Color.White);
-                skillRarity = randomSkill.Next(1, 101);
                 if (skillRarity < 55)
                 {
-                    obtainedSkill = randomSkill.Next(1, 4);
                     if (obtainedSkill == 1)
                     {
                         if (skillList.Contains("explodingFlesh"))
@@ -427,7 +520,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[0], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Exploding Flesh", skillSelectText, Color.White);
-                            skillList.Add("explodingFlesh");
                         }
                     }
                     else if (obtainedSkill == 2)
@@ -441,7 +533,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[1], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Straw Doll", skillSelectText, Color.White);
-                            skillList.Add("strawDoll");
                         }
                     }
                     else if (obtainedSkill == 3)
@@ -455,13 +546,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[2], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Miracle", skillSelectText, Color.White);
-                            skillList.Add("miracle");
                         }
                     }
                 }
                 else if (skillRarity < 80 && skillRarity > 55)
                 {
-                    obtainedSkill = randomSkill.Next(1, 5);
                     if (obtainedSkill == 1)
                     {
                         if (skillList.Contains("ice"))
@@ -473,7 +562,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[3], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Ice", skillSelectText, Color.White);
-                            skillList.Add("ice");
                         }
                     }
                     else if (obtainedSkill == 2)
@@ -487,7 +575,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[4], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Blood", skillSelectText, Color.White);
-                            skillList.Add("blood");
                         }
                     }
                     else if (obtainedSkill == 3)
@@ -501,7 +588,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[5], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Projection", skillSelectText, Color.White);
-                            skillList.Add("projection");
                         }
                     }
                     else if (obtainedSkill == 4)
@@ -515,13 +601,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[6], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Ratio", skillSelectText, Color.White);
-                            skillList.Add("ratio");
                         }
                     }
                 }
                 else if (skillRarity < 95 && skillRarity > 80)
                 {
-                    obtainedSkill = randomSkill.Next(1, 5);
                     if (obtainedSkill == 1)
                     {
                         if (skillList.Contains("RCT"))
@@ -533,7 +617,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[7], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "RCT", skillSelectText, Color.White);
-                            skillList.Add("RCT");
                         }
                     }
                     else if (obtainedSkill == 2)
@@ -547,7 +630,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[8], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Curse Control", skillSelectText, Color.White);
-                            skillList.Add("curseControl");
                         }
                     }
                     else if (obtainedSkill == 3)
@@ -561,7 +643,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[9], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Bug Armour", skillSelectText, Color.White);
-                            skillList.Add("bugArmour");
                         }
                     }
                     else if (obtainedSkill == 4)
@@ -575,13 +656,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[10], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Granite Blast", skillSelectText, Color.White);
-                            skillList.Add("graniteBlast");
                         }
                     }
                 }
                 else if (skillRarity <= 100 && skillRarity > 95)
                 {
-                    obtainedSkill = randomSkill.Next(1, 6);
                     if (obtainedSkill == 1)
                     {
                         if (skillList.Contains("dismantle"))
@@ -593,7 +672,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[11], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Dismantle", skillSelectText, Color.White);
-                            skillList.Add("dismantle");
                         }
                     }
                     else if (obtainedSkill == 2)
@@ -607,7 +685,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[12], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Cleave", skillSelectText, Color.White);
-                            skillList.Add("cleave");
                         }
                     }
                     else if (obtainedSkill == 3)
@@ -621,7 +698,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[13], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Beast Amber", skillSelectText, Color.White);
-                            skillList.Add("beastAmber");
                         }
                     }
                     else if (obtainedSkill == 4)
@@ -635,7 +711,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[14], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Blue", skillSelectText, Color.White);
-                            skillList.Add("blue");
                         }
                     }
                     else if (obtainedSkill == 5)
@@ -649,18 +724,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(skillIcons[15], skillBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Red", skillSelectText, Color.White);
-                            skillList.Add("red");
                         }
                     }
                 }
-                if (skillList.Contains("dismantle") && skillList.Contains("cleave"))
-                    skillList.Add("fuga");
-                if (skillList.Contains("blue") && skillList.Contains("red"))
-                    skillList.Add("purple");
-                weaponRarity = randomWeapon.Next(1, 101);
                 if (weaponRarity < 55)
                 {
-                    obtainedWeapon = randomWeapon.Next(1, 5);
                     if (obtainedWeapon == 1)
                     {
                         if (weaponList.Contains("slaughterDemon"))
@@ -672,7 +740,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[0], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Slaughter Demon", weaponSelectText, Color.White);
-                            weaponList.Add("slaughterDemon");
                         }
                     }
                     else if (obtainedWeapon == 2)
@@ -686,7 +753,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[1], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Hand Sword", weaponSelectText, Color.White);
-                            weaponList.Add("handSword");
                         }
                     }
                     else if (obtainedWeapon == 3)
@@ -700,7 +766,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[2], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Basic Katana", weaponSelectText, Color.White);
-                            weaponList.Add("basicKatana");
                         }
                     }
                     else if (obtainedWeapon == 4)
@@ -714,13 +779,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[3], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Cursed Spear", weaponSelectText, Color.White);
-                            weaponList.Add("cursedSpear");
                         }
                     }
                 }
                 else if (weaponRarity < 80 && weaponRarity > 55)
                 {
-                    obtainedWeapon = randomWeapon.Next(1, 4);
                     if (obtainedWeapon == 1)
                     {
                         if (weaponList.Contains("ratioKnife"))
@@ -732,7 +795,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[4], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Ratio Knife", weaponSelectText, Color.White);
-                            weaponList.Add("ratioKnife");
                         }
                     }
                     else if (obtainedWeapon == 2)
@@ -746,7 +808,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[5], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Cursed Katana", weaponSelectText, Color.White);
-                            weaponList.Add("cursedKatana");
                         }
                     }
                     else if (obtainedWeapon == 3)
@@ -760,13 +821,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[6], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Mallet", weaponSelectText, Color.White);
-                            weaponList.Add("mallet");
                         }
                     }
                 }
                 else if (weaponRarity < 95 && weaponRarity > 80)
                 {
-                    obtainedWeapon = randomWeapon.Next(1, 4);
                     if (obtainedWeapon == 1)
                     {
                         if (weaponList.Contains("dragonBone"))
@@ -778,7 +837,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[7], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Dragon Bone", weaponSelectText, Color.White);
-                            weaponList.Add("dragonBone");
                         }
                     }
                     else if (obtainedWeapon == 2)
@@ -792,7 +850,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[8], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Split Soul", weaponSelectText, Color.White);
-                            weaponList.Add("splitSoul");
                         }
                     }
                     else if (obtainedWeapon == 3)
@@ -806,13 +863,11 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[9], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Festering Life", weaponSelectText, Color.White);
-                            weaponList.Add("festeringLife");
                         }
                     }
                 }
                 else if (weaponRarity <= 100 && weaponRarity > 95)
                 {
-                    obtainedWeapon = randomWeapon.Next(1, 3);
                     if (obtainedWeapon == 1)
                     {
                         if (weaponList.Contains("playfulCloud"))
@@ -824,7 +879,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[10], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Playful Cloud", weaponSelectText, Color.White);
-                            weaponList.Add("playfulCloud");
                         }
                     }
                     else if (obtainedWeapon == 2)
@@ -838,7 +892,6 @@ namespace JJK_Undertale_Final
                         {
                             _spriteBatch.Draw(weaponIcons[11], weaponBox, Color.White);
                             _spriteBatch.DrawString(titleFont, "Inverted Spear", weaponSelectText, Color.White);
-                            weaponList.Add("invertedSpear");
                         }
                     }
                 }
