@@ -25,11 +25,13 @@ namespace JJK_Undertale_Final
         Vector2 openingText, controlsText, skipOption, startOption, skillSelectText, weaponSelectText;
         GamePadState gamePadCurrent, gamePadOld;
         charAttack playerAttack;
+        ParticleEngine particleEngine;
+        List<Texture2D> particles;
         enum Screen
         {
-            Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose
+            Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, WeaponsMenu, SkillsMenu
         }
-        Screen screen = Screen.BattleRewards;
+        Screen screen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
@@ -42,11 +44,13 @@ namespace JJK_Undertale_Final
         List<Texture2D> enemyTextures = new List<Texture2D>();
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
+        List<Texture2D> menuOptions = new List<Texture2D>();
 
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
         float projectileSpeed = 300f;
         float projectileTime = 0f;
         float projectileInterval = 0.8f;
+        float particleTime = 0f;
 
         float soulSpeed = 300f;
         float dodgeTime = 15f;
@@ -57,7 +61,7 @@ namespace JJK_Undertale_Final
         Rectangle punchOptionR = new Rectangle(550, 550, 400, 120);
 
         int obtainedSkill, obtainedWeapon, skillRarity, weaponRarity;
-        bool rewardsGenerated = false;
+        bool rewardsGenerated = false, rewardsAccepted = false;
 
         public Game1()
         {
@@ -69,6 +73,8 @@ namespace JJK_Undertale_Final
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            particles = new List<Texture2D>();
+
             window = new Rectangle(0, 0, 1500, 900);
             _graphics.PreferredBackBufferWidth = window.Width;
             _graphics.PreferredBackBufferHeight = window.Height;
@@ -89,16 +95,21 @@ namespace JJK_Undertale_Final
 
             skillBox = new Rectangle(100, 200, 500, 500);
             weaponBox = new Rectangle(800, 200, 500, 500);
-            skillSelectText = new Vector2(40, 750);
-            weaponSelectText = new Vector2(800, 750);
+            skillSelectText = new Vector2(140, 750);
+            weaponSelectText = new Vector2(900, 750);
             
             soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 30, 30);
             base.Initialize();
+
+            particleEngine = new ParticleEngine(particles, Vector2.Zero, false, true);
         }
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            particles.Add(Content.Load<Texture2D>("tile"));
+
             titleImg = Content.Load<Texture2D>("titleScreen");
             titleSong = Content.Load<Song>("Sounds/titleTheme");
             titleFont = Content.Load<SpriteFont>("titleFont");
@@ -149,12 +160,17 @@ namespace JJK_Undertale_Final
             weaponIcons.Add(Content.Load<Texture2D>("Weapons/playfulCloud"));
             weaponIcons.Add(Content.Load<Texture2D>("Weapons/invertedSpear"));
 
+            menuOptions.Add(Content.Load<Texture2D>("MenuOptions/SkillsMenu"));
+            menuOptions.Add(Content.Load<Texture2D>("MenuOptions/StagesMenu"));
+            menuOptions.Add(Content.Load<Texture2D>("MenuOptions/WeaponsMenu"));
+            for (int i = 1; i < 10; i++)
+                menuOptions.Add(Content.Load<Texture2D>("MenuOptions/stage" + i + "Selection"));
+
             enemy1Attack = Content.Load<Texture2D>("EnemyMoves/b1Attack");
 
             for (int i = 1; i < 6; i++)
-            {
                 punchAnimation.Add(Content.Load<Texture2D>("charAttacks/punch" + i));
-            }
+
             playerAttack = new charAttack(punchAnimation);
             MediaPlayer.Volume = 0.6f;
             // TODO: use this.Content to load your game content here
@@ -225,6 +241,7 @@ namespace JJK_Undertale_Final
             else if (screen == Screen.Battle)
             {
                 float battleTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                particleEngine.Update();
 
                 if (battle == Battle.b1 && dodgePhase)
                 {
@@ -263,7 +280,16 @@ namespace JJK_Undertale_Final
                             charHealth -= 10;
                             invincibilityTime = 1f;
                             b1Projectiles.RemoveAt(i);
+                            particleEngine.Enabled = true;
+                            particleEngine.EmitterLocation = new Vector2(soulSpriteR.Center.X, soulSpriteR.Center.Y);
+                            particleTime = 0;
                             continue;
+                        }
+                        if (particleEngine.Enabled)
+                        {
+                            particleTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                            if (particleTime >= 0.1f)
+                                particleEngine.Enabled = false;
                         }
 
                         if (projectile.Position.X < dodgeBoxR.Left - 60 || projectile.Position.X > dodgeBoxR.Right + 60 || projectile.Position.Y < dodgeBoxR.Top - 60 || projectile.Position.Y > dodgeBoxR.Bottom + 60)
@@ -301,6 +327,7 @@ namespace JJK_Undertale_Final
                     if (enemyHealth <= 0)
                     {
                         rewardsGenerated = false;
+                        rewardsAccepted = false;
                         screen = Screen.BattleRewards;
                     }
                     else if (charHealth <= 0)
@@ -318,118 +345,10 @@ namespace JJK_Undertale_Final
             else if (screen == Screen.BattleRewards)
             {
                 if (!rewardsGenerated)
-                {
-                    skillRarity = randomSkill.Next(1, 101);
-                    weaponRarity = randomWeapon.Next(1, 101);
-
-                    if (skillRarity <= 55)
-                        obtainedSkill = randomSkill.Next(1, 4);
-                    else if (skillRarity <= 80)
-                        obtainedSkill = randomSkill.Next(1, 5);
-                    else if (skillRarity <= 95)
-                        obtainedSkill = randomSkill.Next(1, 5);
-                    else if (skillRarity <= 100 && skillRarity > 95)
-                        obtainedSkill = randomSkill.Next(1, 6);
-
-                    if (weaponRarity <= 55)
-                        obtainedWeapon = randomWeapon.Next(1, 5);
-                    else if (weaponRarity <= 80)
-                        obtainedWeapon = randomWeapon.Next(1, 4);
-                    else if (weaponRarity <= 95)
-                        obtainedWeapon = randomWeapon.Next(1, 4);
-                    else if (weaponRarity <= 100)
-                        obtainedWeapon = randomWeapon.Next(1, 3);
-                    rewardsGenerated = true;
-                    if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
-                    {
-                        if (skillRarity <= 55)
-                        {
-                            if (obtainedSkill == 1 && !skillList.Contains("explodingFlesh"))
-                                skillList.Add("explodingFlesh");
-                            else if (obtainedSkill == 2 && !skillList.Contains("strawDoll"))
-                                skillList.Add("strawDoll");
-                            else if (obtainedSkill == 3 && !skillList.Contains("miracle"))
-                                skillList.Add("miracle");
-                        }
-                        else if (skillRarity <= 80)
-                        {
-                            if (obtainedSkill == 1 && !skillList.Contains("ice"))
-                                skillList.Add("ice");
-                            else if (obtainedSkill == 2 && !skillList.Contains("blood"))
-                                skillList.Add("blood");
-                            else if (obtainedSkill == 3 && !skillList.Contains("projection"))
-                                skillList.Add("projection");
-                            else if (obtainedSkill == 4 && !skillList.Contains("ratio"))
-                                skillList.Add("ratio");
-                        }
-                        else if (skillRarity <= 95)
-                        {
-                            if (obtainedSkill == 1 && !skillList.Contains("RCT"))
-                                skillList.Add("RCT");
-                            else if (obtainedSkill == 2 && !skillList.Contains("cursedControl"))
-                                skillList.Add("curseControl");
-                            else if (obtainedSkill == 3 && !skillList.Contains("bugArmour"))
-                                skillList.Add("bugArmour");
-                            else if (obtainedSkill == 4 && !skillList.Contains("graniteBlast"))
-                                skillList.Add("graniteBlast");
-                        }
-                        else if (skillRarity <= 100 && skillRarity > 95)
-                        {
-                            if (obtainedSkill == 1 && !skillList.Contains("dismantle"))
-                                skillList.Add("dismantle");
-                            else if (obtainedSkill == 2 && !skillList.Contains("cleave"))
-                                skillList.Add("cleave");
-                            else if (obtainedSkill == 3 && !skillList.Contains("beastAmber"))
-                                skillList.Add("beastAmber");
-                            else if (obtainedSkill == 4 && !skillList.Contains("blue"))
-                                skillList.Add("blue");
-                            else if (obtainedSkill == 5 && !skillList.Contains("red"))
-                                skillList.Add("red");
-                        }
-
-                        if (weaponRarity <= 55)
-                        {
-                            if (obtainedWeapon == 1 && !weaponList.Contains("slaughterDemon"))
-                                weaponList.Add("slaughterDemon");
-                            else if (obtainedWeapon == 2 && !weaponList.Contains("handSword"))
-                                weaponList.Add("handSword");
-                            else if (obtainedWeapon == 3 && !weaponList.Contains("basicKatana"))
-                                weaponList.Add("basicKatana");
-                            else if (obtainedWeapon == 4 && !weaponList.Contains("cursedSpear"))
-                                weaponList.Add("cursedSpear");
-                        }
-                        else if (weaponRarity <= 80)
-                        {
-                            if (obtainedWeapon == 1 && !weaponList.Contains("ratioKnife"))
-                                weaponList.Add("ratioKnife");
-                            else if (obtainedWeapon == 2 && !weaponList.Contains("cursedSword"))
-                                weaponList.Add("cursedSword");
-                            else if (obtainedWeapon == 3 && !weaponList.Contains("mallet"))
-                                weaponList.Add("mallet");
-                        }
-                        else if (weaponRarity <= 95)
-                        {
-                            if (obtainedWeapon == 1 && !weaponList.Contains("dragonBone"))
-                                weaponList.Add("dragonBone");
-                            else if (obtainedWeapon == 2 && !weaponList.Contains("soulSplit"))
-                                weaponList.Add("soulSplit");
-                            else if (obtainedSkill == 3 && !weaponList.Contains("festeringLife"))
-                                weaponList.Add("festeringLife");
-                        }
-                        else if (weaponRarity <= 100)
-                        {
-                            if (obtainedWeapon == 1 && !weaponList.Contains("playfulCloud"))
-                                weaponList.Add("playfulCloud");
-                            else if (obtainedWeapon == 2 && !weaponList.Contains("invertedSpear"))
-                                weaponList.Add("invertedSpear");
-                        }
-                        if (skillList.Contains("dismantle") && skillList.Contains("cleave") && !skillList.Contains("fuga"))
-                            skillList.Add("fuga");
-                        if (skillList.Contains("blue") && skillList.Contains("red") && !skillList.Contains("purple"))
-                            skillList.Add("purple");
-                        screen = Screen.Menu;
-                    }
-                }
+                    GenerateRewards();
+                AddSkillandWeapons();
+                if (rewardsGenerated && rewardsAccepted && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    screen = Screen.Menu;
             }
                 base.Update(gameTime);
         }
@@ -468,6 +387,7 @@ namespace JJK_Undertale_Final
                     }
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
                         _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
+                    particleEngine.Draw(_spriteBatch);
                     _spriteBatch.Draw(emptyBox, healthBox, Color.White);
                     _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
                     int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
@@ -506,395 +426,16 @@ namespace JJK_Undertale_Final
             }
             if (screen == Screen.BattleRewards)
             {
-                _spriteBatch.Draw(dodgeBoxT, window, Color.White);
-                if (skillRarity < 55)
-                {
-                    if (obtainedSkill == 1)
-                    {
-                        if (skillList.Contains("explodingFlesh"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[0], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Exploding Flesh", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 2)
-                    {
-                        if (skillList.Contains("strawDoll"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[1], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Straw Doll", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 3)
-                    {
-                        if (skillList.Contains("miracle"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[2], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Miracle", skillSelectText, Color.White);
-                        }
-                    }
-                }
-                else if (skillRarity < 80 && skillRarity > 55)
-                {
-                    if (obtainedSkill == 1)
-                    {
-                        if (skillList.Contains("ice"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[3], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Ice", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 2)
-                    {
-                        if (skillList.Contains("blood"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[4], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Blood", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 3)
-                    {
-                        if (skillList.Contains("projection"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[5], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Projection", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 4)
-                    {
-                        if (skillList.Contains("ratio"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[6], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Ratio", skillSelectText, Color.White);
-                        }
-                    }
-                }
-                else if (skillRarity < 95 && skillRarity > 80)
-                {
-                    if (obtainedSkill == 1)
-                    {
-                        if (skillList.Contains("RCT"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[7], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "RCT", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 2)
-                    {
-                        if (skillList.Contains("curseControl"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[8], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Curse Control", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 3)
-                    {
-                        if (skillList.Contains("bugArmour"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[9], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Bug Armour", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 4)
-                    {
-                        if (skillList.Contains("graniteBlast"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[10], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Granite Blast", skillSelectText, Color.White);
-                        }
-                    }
-                }
-                else if (skillRarity <= 100 && skillRarity > 95)
-                {
-                    if (obtainedSkill == 1)
-                    {
-                        if (skillList.Contains("dismantle"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[11], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Dismantle", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 2)
-                    {
-                        if (skillList.Contains("cleave"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[12], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Cleave", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 3)
-                    {
-                        if (skillList.Contains("beastAmber"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[13], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Beast Amber", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 4)
-                    {
-                        if (skillList.Contains("blue"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[14], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Blue", skillSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedSkill == 5)
-                    {
-                        if (skillList.Contains("red"))
-                        {
-                            _spriteBatch.Draw(emptyBox, skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this skill", skillSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(skillIcons[15], skillBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Red", skillSelectText, Color.White);
-                        }
-                    }
-                }
-                if (weaponRarity < 55)
-                {
-                    if (obtainedWeapon == 1)
-                    {
-                        if (weaponList.Contains("slaughterDemon"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[0], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Slaughter Demon", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 2)
-                    {
-                        if (weaponList.Contains("handSword"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[1], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Hand Sword", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 3)
-                    {
-                        if (weaponList.Contains("basicKatana"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[2], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Basic Katana", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 4)
-                    {
-                        if (weaponList.Contains("cursedSpear"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[3], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Cursed Spear", weaponSelectText, Color.White);
-                        }
-                    }
-                }
-                else if (weaponRarity < 80 && weaponRarity > 55)
-                {
-                    if (obtainedWeapon == 1)
-                    {
-                        if (weaponList.Contains("ratioKnife"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[4], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Ratio Knife", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 2)
-                    {
-                        if (weaponList.Contains("cursedKatana"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[5], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Cursed Katana", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 3)
-                    {
-                        if (weaponList.Contains("mallet"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[6], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Mallet", weaponSelectText, Color.White);
-                        }
-                    }
-                }
-                else if (weaponRarity < 95 && weaponRarity > 80)
-                {
-                    if (obtainedWeapon == 1)
-                    {
-                        if (weaponList.Contains("dragonBone"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[7], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Dragon Bone", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 2)
-                    {
-                        if (weaponList.Contains("splitSoul"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[8], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Split Soul", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 3)
-                    {
-                        if (weaponList.Contains("festeringLife"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[9], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Festering Life", weaponSelectText, Color.White);
-                        }
-                    }
-                }
-                else if (weaponRarity <= 100 && weaponRarity > 95)
-                {
-                    if (obtainedWeapon == 1)
-                    {
-                        if (weaponList.Contains("playfulCloud"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[10], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Playful Cloud", weaponSelectText, Color.White);
-                        }
-                    }
-                    else if (obtainedWeapon == 2)
-                    {
-                        if (weaponList.Contains("invertedSpear"))
-                        {
-                            _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "You already have this weapon", weaponSelectText, Color.White);
-                        }
-                        else
-                        {
-                            _spriteBatch.Draw(weaponIcons[11], weaponBox, Color.White);
-                            _spriteBatch.DrawString(titleFont, "Inverted Spear", weaponSelectText, Color.White);
-                        }
-                    }
-                }
+                if (battle == Battle.b1)
+                    _spriteBatch.DrawString(titleFont, "You have defeated the grade 4 curse and got rewards!", new Vector2(150, 35), Color.White);
+                _spriteBatch.DrawString(titleFont, "Press B to accept rewards then A to continue !", new Vector2(250, 90), Color.White);
+                DrawRewards();
+            }
+            if (screen == Screen.Menu)
+            {
+                _spriteBatch.Draw(backgrounds[0], window, Color.White);
+                _spriteBatch.DrawString(titleFont, skillList[0], new Vector2(50, 35), Color.White);
+                _spriteBatch.DrawString(titleFont, weaponList[0], new Vector2(50, 35), Color.White);
             }
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -952,6 +493,514 @@ namespace JJK_Undertale_Final
             float rotation = (float)Math.Atan2(direction.Y, direction.X);
 
             b1Projectiles.Add(new b1Projectile(spawnPosition, direction, rotation));
+        }
+        void AddSkillandWeapons()
+        {
+            if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+            {
+                if (skillRarity <= 55)
+                {
+                    if (obtainedSkill == 1 && !skillList.Contains("explodingFlesh"))
+                        skillList.Add("explodingFlesh");
+                    else if (obtainedSkill == 2 && !skillList.Contains("strawDoll"))
+                        skillList.Add("strawDoll");
+                    else if (obtainedSkill == 3 && !skillList.Contains("miracle"))
+                        skillList.Add("miracle");
+                }
+                else if (skillRarity <= 80)
+                {
+                    if (obtainedSkill == 1 && !skillList.Contains("ice"))
+                        skillList.Add("ice");
+                    else if (obtainedSkill == 2 && !skillList.Contains("blood"))
+                        skillList.Add("blood");
+                    else if (obtainedSkill == 3 && !skillList.Contains("projection"))
+                        skillList.Add("projection");
+                    else if (obtainedSkill == 4 && !skillList.Contains("ratio"))
+                        skillList.Add("ratio");
+                }
+                else if (skillRarity <= 95)
+                {
+                    if (obtainedSkill == 1 && !skillList.Contains("RCT"))
+                        skillList.Add("RCT");
+                    else if (obtainedSkill == 2 && !skillList.Contains("cursedControl"))
+                        skillList.Add("curseControl");
+                    else if (obtainedSkill == 3 && !skillList.Contains("bugArmour"))
+                        skillList.Add("bugArmour");
+                    else if (obtainedSkill == 4 && !skillList.Contains("graniteBlast"))
+                        skillList.Add("graniteBlast");
+                }
+                else if (skillRarity <= 100 && skillRarity > 95)
+                {
+                    if (obtainedSkill == 1 && !skillList.Contains("dismantle"))
+                        skillList.Add("dismantle");
+                    else if (obtainedSkill == 2 && !skillList.Contains("cleave"))
+                        skillList.Add("cleave");
+                    else if (obtainedSkill == 3 && !skillList.Contains("beastAmber"))
+                        skillList.Add("beastAmber");
+                    else if (obtainedSkill == 4 && !skillList.Contains("blue"))
+                        skillList.Add("blue");
+                    else if (obtainedSkill == 5 && !skillList.Contains("red"))
+                        skillList.Add("red");
+                }
+
+                if (weaponRarity <= 55)
+                {
+                    if (obtainedWeapon == 1 && !weaponList.Contains("slaughterDemon"))
+                        weaponList.Add("slaughterDemon");
+                    else if (obtainedWeapon == 2 && !weaponList.Contains("handSword"))
+                        weaponList.Add("handSword");
+                    else if (obtainedWeapon == 3 && !weaponList.Contains("basicKatana"))
+                        weaponList.Add("basicKatana");
+                    else if (obtainedWeapon == 4 && !weaponList.Contains("cursedSpear"))
+                        weaponList.Add("cursedSpear");
+                }
+                else if (weaponRarity <= 80)
+                {
+                    if (obtainedWeapon == 1 && !weaponList.Contains("ratioKnife"))
+                        weaponList.Add("ratioKnife");
+                    else if (obtainedWeapon == 2 && !weaponList.Contains("cursedSword"))
+                        weaponList.Add("cursedSword");
+                    else if (obtainedWeapon == 3 && !weaponList.Contains("mallet"))
+                        weaponList.Add("mallet");
+                }
+                else if (weaponRarity <= 95)
+                {
+                    if (obtainedWeapon == 1 && !weaponList.Contains("dragonBone"))
+                        weaponList.Add("dragonBone");
+                    else if (obtainedWeapon == 2 && !weaponList.Contains("soulSplit"))
+                        weaponList.Add("soulSplit");
+                    else if (obtainedWeapon == 3 && !weaponList.Contains("festeringLife"))
+                        weaponList.Add("festeringLife");
+                }
+                else if (weaponRarity <= 100)
+                {
+                    if (obtainedWeapon == 1 && !weaponList.Contains("playfulCloud"))
+                        weaponList.Add("playfulCloud");
+                    else if (obtainedWeapon == 2 && !weaponList.Contains("invertedSpear"))
+                        weaponList.Add("invertedSpear");
+                }
+                if (skillList.Contains("dismantle") && skillList.Contains("cleave") && !skillList.Contains("fuga"))
+                    skillList.Add("fuga");
+                if (skillList.Contains("blue") && skillList.Contains("red") && !skillList.Contains("purple"))
+                    skillList.Add("purple");
+                rewardsAccepted = true;
+            }
+        }
+        void DrawRewards()
+        {
+            _spriteBatch.Draw(dodgeBoxT, window, Color.White);
+            if (skillRarity <= 55)
+            {
+                if (obtainedSkill == 1)
+                {
+                    if (skillList.Contains("explodingFlesh"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[0], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Exploding Flesh", skillSelectText, Color.White);
+                    }
+                }
+                else if (obtainedSkill == 2)
+                {
+                    if (skillList.Contains("strawDoll"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[1], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Straw Doll", skillSelectText, Color.White);
+                    }
+                }
+                else if (obtainedSkill == 3)
+                {
+                    if (skillList.Contains("miracle"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[2], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Miracle", skillSelectText, Color.White);
+                    }
+                }
+            }
+            else if (skillRarity <= 80 && skillRarity > 55)
+            {
+                if (obtainedSkill == 1)
+                {
+                    if (skillList.Contains("ice"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[3], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Ice", skillSelectText, Color.Blue);
+                    }
+                }
+                else if (obtainedSkill == 2)
+                {
+                    if (skillList.Contains("blood"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[4], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Blood", skillSelectText, Color.Blue);
+                    }
+                }
+                else if (obtainedSkill == 3)
+                {
+                    if (skillList.Contains("projection"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[5], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Projection", skillSelectText, Color.Blue);
+                    }
+                }
+                else if (obtainedSkill == 4)
+                {
+                    if (skillList.Contains("ratio"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[6], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Ratio", skillSelectText, Color.Blue);
+                    }
+                }
+            }
+            else if (skillRarity <= 95 && skillRarity > 80)
+            {
+                if (obtainedSkill == 1)
+                {
+                    if (skillList.Contains("RCT"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[7], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "RCT", skillSelectText, Color.Purple);
+                    }
+                }
+                else if (obtainedSkill == 2)
+                {
+                    if (skillList.Contains("curseControl"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[8], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Curse Control", skillSelectText, Color.Purple);
+                    }
+                }
+                else if (obtainedSkill == 3)
+                {
+                    if (skillList.Contains("bugArmour"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[9], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Bug Armour", skillSelectText, Color.Purple);
+                    }
+                }
+                else if (obtainedSkill == 4)
+                {
+                    if (skillList.Contains("graniteBlast"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[10], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Granite Blast", skillSelectText, Color.Purple);
+                    }
+                }
+            }
+            else if (skillRarity <= 100 && skillRarity > 95)
+            {
+                if (obtainedSkill == 1)
+                {
+                    if (skillList.Contains("dismantle"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[11], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Dismantle", skillSelectText, Color.Yellow);
+                    }
+                }
+                else if (obtainedSkill == 2)
+                {
+                    if (skillList.Contains("cleave"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[12], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Cleave", skillSelectText, Color.Yellow);
+                    }
+                }
+                else if (obtainedSkill == 3)
+                {
+                    if (skillList.Contains("beastAmber"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[13], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Beast Amber", skillSelectText, Color.Yellow);
+                    }
+                }
+                else if (obtainedSkill == 4)
+                {
+                    if (skillList.Contains("blue"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[14], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Blue", skillSelectText, Color.Yellow);
+                    }
+                }
+                else if (obtainedSkill == 5)
+                {
+                    if (skillList.Contains("red"))
+                    {
+                        _spriteBatch.Draw(emptyBox, skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this skill", new Vector2(skillSelectText.X - 100, skillSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(skillIcons[15], skillBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Red", skillSelectText, Color.Yellow);
+                    }
+                }
+            }
+            if (weaponRarity <= 55)
+            {
+                if (obtainedWeapon == 1)
+                {
+                    if (weaponList.Contains("slaughterDemon"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[0], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Slaughter Demon", weaponSelectText, Color.White);
+                    }
+                }
+                else if (obtainedWeapon == 2)
+                {
+                    if (weaponList.Contains("handSword"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[1], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Hand Sword", weaponSelectText, Color.White);
+                    }
+                }
+                else if (obtainedWeapon == 3)
+                {
+                    if (weaponList.Contains("basicKatana"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[2], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Basic Katana", weaponSelectText, Color.White);
+                    }
+                }
+                else if (obtainedWeapon == 4)
+                {
+                    if (weaponList.Contains("cursedSpear"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[3], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Cursed Spear", weaponSelectText, Color.White);
+                    }
+                }
+            }
+            else if (weaponRarity <= 80 && weaponRarity > 55)
+            {
+                if (obtainedWeapon == 1)
+                {
+                    if (weaponList.Contains("ratioKnife"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[4], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Ratio Knife", weaponSelectText, Color.Blue);
+                    }
+                }
+                else if (obtainedWeapon == 2)
+                {
+                    if (weaponList.Contains("cursedKatana"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[5], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Cursed Katana", weaponSelectText, Color.Blue);
+                    }
+                }
+                else if (obtainedWeapon == 3)
+                {
+                    if (weaponList.Contains("mallet"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[6], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Mallet", weaponSelectText, Color.Blue);
+                    }
+                }
+            }
+            else if (weaponRarity <= 95 && weaponRarity > 80)
+            {
+                if (obtainedWeapon == 1)
+                {
+                    if (weaponList.Contains("dragonBone"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[7], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Dragon Bone", weaponSelectText, Color.Purple);
+                    }
+                }
+                else if (obtainedWeapon == 2)
+                {
+                    if (weaponList.Contains("splitSoul"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[8], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Split Soul", weaponSelectText, Color.Purple);
+                    }
+                }
+                else if (obtainedWeapon == 3)
+                {
+                    if (weaponList.Contains("festeringLife"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[9], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Festering Life", weaponSelectText, Color.Purple);
+                    }
+                }
+            }
+            else if (weaponRarity <= 100 && weaponRarity > 95)
+            {
+                if (obtainedWeapon == 1)
+                {
+                    if (weaponList.Contains("playfulCloud"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[10], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Playful Cloud", weaponSelectText, Color.Yellow);
+                    }
+                }
+                else if (obtainedWeapon == 2)
+                {
+                    if (weaponList.Contains("invertedSpear"))
+                    {
+                        _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
+                    }
+                    else
+                    {
+                        _spriteBatch.Draw(weaponIcons[11], weaponBox, Color.White);
+                        _spriteBatch.DrawString(titleFont, "Inverted Spear", weaponSelectText, Color.Yellow);
+                    }
+                }
+            }
+        }
+        void GenerateRewards()
+        {
+            skillRarity = randomSkill.Next(1, 101);
+            weaponRarity = randomWeapon.Next(1, 101);
+
+            if (skillRarity <= 55)
+                obtainedSkill = randomSkill.Next(1, 4);
+            else if (skillRarity <= 80)
+                obtainedSkill = randomSkill.Next(1, 5);
+            else if (skillRarity <= 95)
+                obtainedSkill = randomSkill.Next(1, 5);
+            else if (skillRarity <= 100 && skillRarity > 95)
+                obtainedSkill = randomSkill.Next(1, 6);
+
+            if (weaponRarity <= 55)
+                obtainedWeapon = randomWeapon.Next(1, 5);
+            else if (weaponRarity <= 80)
+                obtainedWeapon = randomWeapon.Next(1, 4);
+            else if (weaponRarity <= 95)
+                obtainedWeapon = randomWeapon.Next(1, 4);
+            else if (weaponRarity <= 100)
+                obtainedWeapon = randomWeapon.Next(1, 3);
+            rewardsGenerated = true;
         }
     }
 }
