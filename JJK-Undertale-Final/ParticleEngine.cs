@@ -35,8 +35,8 @@ namespace JJK_Undertale_Final
             Vector2 velocity = new Vector2(1f * (float)(_generator.NextDouble() * 2 - 1), 1f * (float)(_generator.NextDouble() * 2 - 1));
             float angle = 0;
             float angularVelocity = 0.1f * (float)(_generator.NextDouble() * 2 - 1);
-            Color color = Color.Blue;
-            int size = _generator.Next(1, 5);
+            Color color = Color.LightBlue;
+            int size = _generator.Next(1, 10);
             int ttl = 10 + _generator.Next(40);
             return new Particle(texture, position, velocity, angle, angularVelocity, color, size, ttl, _gravityEnabled);
         }

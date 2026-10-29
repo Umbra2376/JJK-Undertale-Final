@@ -20,7 +20,9 @@ namespace JJK_Undertale_Final
         Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, barTexture;
         SpriteFont titleFont;
         Song titleSong;
+        bool punchSelecting = true, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
         Rectangle window, dodgeBoxR, soulSpriteR, charHR, charHBarR, charCEBarR, enemyHBarR, healthBox, battleMenu, skillBox, weaponBox;
+        Rectangle stagesMenuR, skillsMenuR, weaponsMenuR;
         float titleO, titleTime, invincibilityTime;
         Vector2 openingText, controlsText, skipOption, startOption, skillSelectText, weaponSelectText;
         GamePadState gamePadCurrent, gamePadOld;
@@ -29,9 +31,9 @@ namespace JJK_Undertale_Final
         List<Texture2D> particles;
         enum Screen
         {
-            Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, WeaponsMenu, SkillsMenu
+            Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose
         }
-        Screen screen = Screen.Title;
+        Screen screen = Screen.BattleRewards;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
@@ -58,7 +60,7 @@ namespace JJK_Undertale_Final
         bool dodgePhase = true;
         int enemyHealth = 100, enemyHealthMax = 100;
         Rectangle enemyHR;
-        Rectangle punchOptionR = new Rectangle(550, 550, 400, 120);
+        Rectangle punchOptionR = new Rectangle(50, 550, 400, 120);
 
         int obtainedSkill, obtainedWeapon, skillRarity, weaponRarity;
         bool rewardsGenerated = false, rewardsAccepted = false;
@@ -97,8 +99,12 @@ namespace JJK_Undertale_Final
             weaponBox = new Rectangle(800, 200, 500, 500);
             skillSelectText = new Vector2(140, 750);
             weaponSelectText = new Vector2(900, 750);
+
+            stagesMenuR = new Rectangle(60, 20, 500, 230);
+            skillsMenuR = new Rectangle(60, 340, 500, 230);
+            weaponsMenuR = new Rectangle(60, 640, 500, 230);
             
-            soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 30, 30);
+            soulSpriteR = new Rectangle(dodgeBoxR.Center.X - 15, dodgeBoxR.Center.Y - 15, 50, 50);
             base.Initialize();
 
             particleEngine = new ParticleEngine(particles, Vector2.Zero, false, true);
@@ -350,6 +356,12 @@ namespace JJK_Undertale_Final
                 if (rewardsGenerated && rewardsAccepted && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     screen = Screen.Menu;
             }
+            else if (screen == Screen.Menu)
+            {
+                MoveInMenu();
+                if (stageSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed)
+                    showStagesMenu = true;
+            }    
                 base.Update(gameTime);
         }
         protected override void Draw(GameTime gameTime)
@@ -417,7 +429,7 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
-                    if (playerAttack._isPunching)
+                    if (punchSelecting)
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
                     else
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
@@ -434,8 +446,23 @@ namespace JJK_Undertale_Final
             if (screen == Screen.Menu)
             {
                 _spriteBatch.Draw(backgrounds[0], window, Color.White);
-                _spriteBatch.DrawString(titleFont, skillList[0], new Vector2(50, 35), Color.White);
-                _spriteBatch.DrawString(titleFont, weaponList[0], new Vector2(50, 35), Color.White);
+                if (skillSelecting)
+                    _spriteBatch.Draw(menuOptions[0], skillsMenuR, Color.Yellow);
+                else
+                    _spriteBatch.Draw(menuOptions[0], skillsMenuR, Color.White);
+                if (stageSelecting)
+                    _spriteBatch.Draw(menuOptions[1], stagesMenuR, Color.Yellow);
+                else
+                    _spriteBatch.Draw(menuOptions[1], stagesMenuR, Color.White);
+                if (weaponSelecting)
+                    _spriteBatch.Draw(menuOptions[2], weaponsMenuR, Color.Yellow);
+                else
+                    _spriteBatch.Draw(menuOptions[2], weaponsMenuR, Color.White);
+                if (showStagesMenu)
+                {
+                    for (int i = 3; i < 12; i++)
+                        _spriteBatch.Draw(menuOptions[i], new Rectangle(800, -600 + ( i * 150), 300, 60), Color.White);
+                }
             }
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -567,8 +594,8 @@ namespace JJK_Undertale_Final
                 {
                     if (obtainedWeapon == 1 && !weaponList.Contains("dragonBone"))
                         weaponList.Add("dragonBone");
-                    else if (obtainedWeapon == 2 && !weaponList.Contains("soulSplit"))
-                        weaponList.Add("soulSplit");
+                    else if (obtainedWeapon == 2 && !weaponList.Contains("splitSoul"))
+                        weaponList.Add("splitSoul");
                     else if (obtainedWeapon == 3 && !weaponList.Contains("festeringLife"))
                         weaponList.Add("festeringLife");
                 }
@@ -881,7 +908,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (obtainedWeapon == 2)
                 {
-                    if (weaponList.Contains("cursedKatana"))
+                    if (weaponList.Contains("cursedSword"))
                     {
                         _spriteBatch.Draw(emptyBox, weaponBox, Color.White);
                         _spriteBatch.DrawString(titleFont, "You already have this weapon", new Vector2(weaponSelectText.X - 100, weaponSelectText.Y), Color.White);
@@ -889,7 +916,7 @@ namespace JJK_Undertale_Final
                     else
                     {
                         _spriteBatch.Draw(weaponIcons[5], weaponBox, Color.White);
-                        _spriteBatch.DrawString(titleFont, "Cursed Katana", weaponSelectText, Color.Blue);
+                        _spriteBatch.DrawString(titleFont, "Cursed Sword", weaponSelectText, Color.Blue);
                     }
                 }
                 else if (obtainedWeapon == 3)
@@ -1001,6 +1028,29 @@ namespace JJK_Undertale_Final
             else if (weaponRarity <= 100)
                 obtainedWeapon = randomWeapon.Next(1, 3);
             rewardsGenerated = true;
+        }
+        void MoveInMenu()
+        {
+            if (stageSelecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stageSelecting = false;
+                skillSelecting = true;
+            }
+            else if (skillSelecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                skillSelecting = false;
+                weaponSelecting = true;
+            }
+            else if (skillSelecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stageSelecting = true;
+                skillSelecting = false;
+            }
+            else if (weaponSelecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                weaponSelecting = false;
+                skillSelecting = true;
+            }
         }
     }
 }
