@@ -17,10 +17,12 @@ namespace JJK_Undertale_Final
         Random randomSkill = new Random(), randomWeapon = new Random(), random = new Random(), rarity = new Random();
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        private Matrix _transformMatrix;
         Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, barTexture;
-        SpriteFont titleFont;
+        SpriteFont titleFont, stagesFont;
         Song titleSong;
         bool punchSelecting = true, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
+        bool stage1Selecting, stage2Selecting, stage3Selecting, stage4Selecting, stage5Selecting, stage6Selecting, stage7Selecting, stage8Selecting, stage9Selecting, stage10Selecting;
         Rectangle window, dodgeBoxR, soulSpriteR, charHR, charHBarR, charCEBarR, enemyHBarR, healthBox, battleMenu, skillBox, weaponBox;
         Rectangle stagesMenuR, skillsMenuR, weaponsMenuR;
         float titleO, titleTime, invincibilityTime;
@@ -31,9 +33,9 @@ namespace JJK_Undertale_Final
         List<Texture2D> particles;
         enum Screen
         {
-            Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose
+            Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.BattleRewards;
+        Screen screen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
@@ -70,6 +72,9 @@ namespace JJK_Undertale_Final
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
+            _graphics.IsFullScreen = true;
+            _graphics.ApplyChanges();
         }
 
         protected override void Initialize()
@@ -114,11 +119,14 @@ namespace JJK_Undertale_Final
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            _transformMatrix = Matrix.CreateScale(GraphicsDevice.Viewport.Width / (float)window.Width, GraphicsDevice.Viewport.Height / (float)window.Height, 1f);
+
             particles.Add(Content.Load<Texture2D>("tile"));
 
             titleImg = Content.Load<Texture2D>("titleScreen");
             titleSong = Content.Load<Song>("Sounds/titleTheme");
             titleFont = Content.Load<SpriteFont>("titleFont");
+            stagesFont = Content.Load<SpriteFont>("stagesFont");
             dodgeBoxT = Content.Load<Texture2D>("dodgeBox");
             soulSpirteT = Content.Load<Texture2D>("soulSprite");
             emptyBox = Content.Load<Texture2D>("emptySlot");
@@ -169,7 +177,7 @@ namespace JJK_Undertale_Final
             menuOptions.Add(Content.Load<Texture2D>("MenuOptions/SkillsMenu"));
             menuOptions.Add(Content.Load<Texture2D>("MenuOptions/StagesMenu"));
             menuOptions.Add(Content.Load<Texture2D>("MenuOptions/WeaponsMenu"));
-            for (int i = 1; i < 10; i++)
+            for (int i = 1; i < 11; i++)
                 menuOptions.Add(Content.Load<Texture2D>("MenuOptions/stage" + i + "Selection"));
 
             enemy1Attack = Content.Load<Texture2D>("EnemyMoves/b1Attack");
@@ -185,7 +193,11 @@ namespace JJK_Undertale_Final
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Triggers.Left > 0)
+                screen = Screen.Quit;
+            if (screen == Screen.Quit && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                 Exit();
+            else if (screen == Screen.Quit && gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                screen = Screen.Menu;
 
             // TODO: Add your update logic here
             gamePadOld = gamePadCurrent;
@@ -248,6 +260,20 @@ namespace JJK_Undertale_Final
             {
                 float battleTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
                 particleEngine.Update();
+                titleTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                titleO = 0f;
+                if (titleTime <= 0.5f)
+                    titleO = titleTime / 0.5f;
+                else if (titleTime <= 1.5f)
+                    titleO = 1;
+                else if (titleTime <= 2f)
+                    titleO = 1f - ((titleTime - 1.5f) / 0.5f);
+                else
+                {
+                    titleO = 0;
+                    titleTime = 0;
+                }
 
                 if (battle == Battle.b1 && dodgePhase)
                 {
@@ -313,6 +339,7 @@ namespace JJK_Undertale_Final
                         dodgePhase = false;
                         b1Projectiles.Clear();
                         screen = Screen.Select;
+                        titleTime = 0f;
                     }
                 }
             }
@@ -353,14 +380,37 @@ namespace JJK_Undertale_Final
                 if (!rewardsGenerated)
                     GenerateRewards();
                 AddSkillandWeapons();
-                if (rewardsGenerated && rewardsAccepted && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                if (rewardsGenerated && rewardsAccepted && gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
                     screen = Screen.Menu;
             }
             else if (screen == Screen.Menu)
             {
                 MoveInMenu();
                 if (stageSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed)
+                {
+                    stageSelecting = false;
                     showStagesMenu = true;
+                    stage1Selecting = true;
+                }
+                if (showStagesMenu)
+                {
+                    MoveStagesSelection();
+                    if (stage1Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadCurrent.Buttons.B == ButtonState.Released)
+                    {
+                        screen = Screen.Battle;
+                        battle = Battle.b1;
+                        dodgePhase = true;
+                        dodgeTime = 15f;
+                        projectileTime = 0f;
+                        invincibilityTime = 0f;
+
+                        b1Projectiles.Clear();
+                        charHealth = charHealthMax;
+                        enemyHealth = enemyHealthMax;
+                        playerAttack.Reset();
+                    }
+
+                }
             }    
                 base.Update(gameTime);
         }
@@ -369,22 +419,27 @@ namespace JJK_Undertale_Final
             GraphicsDevice.Clear(Color.Black);
 
             // TODO: Add your drawing code here
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(transformMatrix: _transformMatrix);
 
             if (screen == Screen.Title)
             {
-                _spriteBatch.Draw(titleImg, window, Color.White * titleO);
+                _spriteBatch.Draw(titleImg, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White * titleO);
                 _spriteBatch.DrawString(titleFont, "Press START to start", startOption, Color.White);
             }
-            if (screen == Screen.Opening)
+            else if (screen == Screen.Quit)
+            {
+                _spriteBatch.DrawString(titleFont, "You are trying to quit. Are you sure?", new Vector2(350, 100), Color.White);
+                _spriteBatch.DrawString(titleFont, "Press A to quit and B to go back to menu", new Vector2(285, 650), Color.White);
+            }
+            else if (screen == Screen.Opening)
             {
                 DrawOpeningText();
             }
-            if (screen == Screen.Battle)
+            else if (screen == Screen.Battle)
             {
                 if (battle == Battle.b1)
                 {
-                    _spriteBatch.Draw(backgrounds[1], window, Color.White);
+                    _spriteBatch.Draw(backgrounds[1], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
                     _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -392,7 +447,7 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
                     _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
                     _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
-                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White);
+                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
                     foreach (b1Projectile b1projectile in b1Projectiles)
                     {
                         _spriteBatch.Draw(enemy1Attack, b1projectile.Position, null, Color.White, b1projectile.Rotation, new Vector2(enemy1Attack.Width / 2f, enemy1Attack.Height / 2f), 0.5f, SpriteEffects.None, 0f);
@@ -409,18 +464,18 @@ namespace JJK_Undertale_Final
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
                 }
             }
-            if (screen == Screen.Select)
+            else if (screen == Screen.Select)
             {
                 if (battle == Battle.b1)
                 {
-                    _spriteBatch.Draw(backgrounds[1], window, Color.White);
+                    _spriteBatch.Draw(backgrounds[1], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
                     _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
 
                     if (enemyBarWidth > 0)
                         _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
-                        _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
                     _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
                     _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
@@ -436,16 +491,16 @@ namespace JJK_Undertale_Final
                     playerAttack.Draw(_spriteBatch);
                 }
             }
-            if (screen == Screen.BattleRewards)
+            else if (screen == Screen.BattleRewards)
             {
                 if (battle == Battle.b1)
                     _spriteBatch.DrawString(titleFont, "You have defeated the grade 4 curse and got rewards!", new Vector2(150, 35), Color.White);
-                _spriteBatch.DrawString(titleFont, "Press B to accept rewards then A to continue !", new Vector2(250, 90), Color.White);
+                _spriteBatch.DrawString(titleFont, "Press B to accept rewards then START to continue !", new Vector2(200, 90), Color.White);
                 DrawRewards();
             }
-            if (screen == Screen.Menu)
+            else if (screen == Screen.Menu)
             {
-                _spriteBatch.Draw(backgrounds[0], window, Color.White);
+                _spriteBatch.Draw(backgrounds[0], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
                 if (skillSelecting)
                     _spriteBatch.Draw(menuOptions[0], skillsMenuR, Color.Yellow);
                 else
@@ -460,8 +515,56 @@ namespace JJK_Undertale_Final
                     _spriteBatch.Draw(menuOptions[2], weaponsMenuR, Color.White);
                 if (showStagesMenu)
                 {
-                    for (int i = 3; i < 12; i++)
-                        _spriteBatch.Draw(menuOptions[i], new Rectangle(800, -600 + ( i * 150), 300, 60), Color.White);
+                    if (stage1Selecting)
+                        _spriteBatch.Draw(menuOptions[3], new Rectangle(700, 25, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[3], new Rectangle(700, 25, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Grade 4 Curse", new Vector2(750, 160), Color.White);
+                    if (stage2Selecting)
+                        _spriteBatch.Draw(menuOptions[4], new Rectangle(700, 200, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[4], new Rectangle(700, 200, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Grasshopper Curse", new Vector2(720, 335), Color.White);
+                    if (stage3Selecting)
+                        _spriteBatch.Draw(menuOptions[5], new Rectangle(700, 375, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[5], new Rectangle(700, 375, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Brothers Curses", new Vector2(730, 510), Color.White);
+                    if (stage4Selecting)
+                        _spriteBatch.Draw(menuOptions[6], new Rectangle(700, 550, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[6], new Rectangle(700, 550, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Choso", new Vector2(800, 685), Color.White);
+                    if (stage5Selecting)
+                        _spriteBatch.Draw(menuOptions[7], new Rectangle(700, 725, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[7], new Rectangle(700, 725, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Agito", new Vector2(800, 855), Color.White);
+                    if (stage6Selecting)
+                        _spriteBatch.Draw(menuOptions[8], new Rectangle(1150, 25, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[8], new Rectangle(1150, 25, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Mahito", new Vector2(1255, 160), Color.White);
+                    if (stage7Selecting)
+                        _spriteBatch.Draw(menuOptions[9], new Rectangle(1150, 200, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[9], new Rectangle(1150, 200, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Jogo", new Vector2(1255, 335), Color.White);
+                    if (stage8Selecting)
+                        _spriteBatch.Draw(menuOptions[10], new Rectangle(1150, 375, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[10], new Rectangle(1150, 375, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Kenj aku", new Vector2(1235, 510), Color.White);
+                    if (stage9Selecting)
+                        _spriteBatch.Draw(menuOptions[11], new Rectangle(1150, 550, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[11], new Rectangle(1150, 550, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Mahoraga", new Vector2(1235, 685), Color.White);
+                    if (stage10Selecting)
+                        _spriteBatch.Draw(menuOptions[12], new Rectangle(1150, 725, 300, 130), Color.Yellow);
+                    else
+                        _spriteBatch.Draw(menuOptions[12], new Rectangle(1150, 725, 300, 130), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Sukuna", new Vector2(1220, 855), Color.White);
                 }
             }
             _spriteBatch.End();
@@ -615,7 +718,7 @@ namespace JJK_Undertale_Final
         }
         void DrawRewards()
         {
-            _spriteBatch.Draw(dodgeBoxT, window, Color.White);
+            _spriteBatch.Draw(dodgeBoxT, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
             if (skillRarity <= 55)
             {
                 if (obtainedSkill == 1)
@@ -1050,6 +1153,144 @@ namespace JJK_Undertale_Final
             {
                 weaponSelecting = false;
                 skillSelecting = true;
+            }
+        }
+        void MoveStagesSelection()
+        {
+            if (stage1Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage1Selecting = false;
+                stage2Selecting = true;
+            }
+            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage2Selecting = false;
+                stage3Selecting = true;
+            }
+            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage3Selecting = false;
+                stage4Selecting = true;
+            }
+            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage4Selecting = false;
+                stage5Selecting = true;
+            }
+            else if (stage5Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage5Selecting = false;
+                stage4Selecting = true;
+            }
+            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage4Selecting = false;
+                stage3Selecting = true;
+            }
+            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage3Selecting = false;
+                stage2Selecting = true;
+            }
+            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage2Selecting = false;
+                stage1Selecting = true;
+            }
+            else if (stage1Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage1Selecting = false;
+                stage6Selecting = true;
+            }
+            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage2Selecting = false;
+                stage7Selecting = true;
+            }
+            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage3Selecting = false;
+                stage8Selecting = true;
+            }
+            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage4Selecting = false;
+                stage9Selecting = true;
+            }
+            else if (stage5Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage5Selecting = false;
+                stage10Selecting = true;
+            }
+            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage6Selecting = false;
+                stage1Selecting = true;
+            }
+            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage7Selecting = false;
+                stage2Selecting = true;
+            }
+            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage8Selecting = false;
+                stage3Selecting = true;
+            }
+            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage9Selecting = false;
+                stage4Selecting = true;
+            }
+            else if (stage10Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            {
+                stage10Selecting = false;
+                stage5Selecting = true;
+            }
+            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage6Selecting = false;
+                stage7Selecting = true;
+            }
+            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage7Selecting = false;
+                stage8Selecting = true;
+            }
+            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage8Selecting = false;
+                stage9Selecting = true;
+            }
+            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage9Selecting = false;
+                stage10Selecting = true;
+            }
+            else if (stage10Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage10Selecting = false;
+                stage9Selecting = true;
+            }
+            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage9Selecting = false;
+                stage8Selecting = true;
+            }
+            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage8Selecting = false;
+                stage7Selecting = true;
+            }
+            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage7Selecting = false;
+                stage6Selecting = true;
+            }
+            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            {
+                stage6Selecting = false;
+                stage5Selecting = true;
             }
         }
     }

@@ -920,6 +920,14 @@
 /processorParam:Version=3.8.5.1
 /build:Sounds/titleTheme.mp3
 
+#begin stagesFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/processorParam:Version=3.8.5.1
+/build:stagesFont.spritefont
+
 #begin tile.png
 /importer:TextureImporter
 /processor:TextureProcessor
