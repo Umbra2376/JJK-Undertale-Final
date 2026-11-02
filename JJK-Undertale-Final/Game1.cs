@@ -18,11 +18,12 @@ namespace JJK_Undertale_Final
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         private Matrix _transformMatrix;
-        Texture2D titleImg, dodgeBoxT, soulSpirteT, enemy1Attack, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, barTexture;
+        Texture2D titleImg, dodgeBoxT, soulSpirteT, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, barTexture;
         SpriteFont titleFont, stagesFont;
         Song titleSong;
         bool punchSelecting = true, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
         bool stage1Selecting, stage2Selecting, stage3Selecting, stage4Selecting, stage5Selecting, stage6Selecting, stage7Selecting, stage8Selecting, stage9Selecting, stage10Selecting;
+        bool stage3Unlock, stage4Unlock, stage5Unlock, stage6Unlock, stage7Unlock, stage8Unlock, stage9Unlock, stage10Unlock;
         Rectangle window, dodgeBoxR, soulSpriteR, charHR, charHBarR, charCEBarR, enemyHBarR, healthBox, battleMenu, skillBox, weaponBox;
         Rectangle stagesMenuR, skillsMenuR, weaponsMenuR;
         float titleO, titleTime, invincibilityTime;
@@ -49,8 +50,9 @@ namespace JJK_Undertale_Final
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
         List<Texture2D> menuOptions = new List<Texture2D>();
-
+        List<Texture2D> enemyAttacks = new List<Texture2D>();
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
+
         float projectileSpeed = 300f;
         float projectileTime = 0f;
         float projectileInterval = 0.8f;
@@ -95,7 +97,7 @@ namespace JJK_Undertale_Final
             dodgeBoxR = new Rectangle(400, 400, 700, 300);
             charHR = new Rectangle(370, 775, 450, 150);
             charHBarR = new Rectangle(400, 805, 400, 90);
-            healthBox = new Rectangle(-40, 750, 1575, 250);
+            healthBox = new Rectangle(-40, 750, 1675, 250);
             battleMenu = new Rectangle(-60, 400, 1625, 650);
             enemyHR = new Rectangle(525, -15, 450, 150);
             enemyHBarR = new Rectangle(537, 48, 425, 30);
@@ -132,6 +134,7 @@ namespace JJK_Undertale_Final
             emptyBox = Content.Load<Texture2D>("emptySlot");
 
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/firstBattleCurse"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/Grasshopper"));
 
             charHBarT = Content.Load<Texture2D>("charHealth");
             charCEBarT = Content.Load<Texture2D>("CEbar");
@@ -141,6 +144,7 @@ namespace JJK_Undertale_Final
 
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/menuBg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle1Bg"));
+            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/b2Background"));
 
             skillIcons.Add(Content.Load<Texture2D>("SkillIcons/explodingFleshIcon"));
             skillIcons.Add(Content.Load<Texture2D>("SkillIcons/strawDollIcon"));
@@ -179,8 +183,9 @@ namespace JJK_Undertale_Final
             menuOptions.Add(Content.Load<Texture2D>("MenuOptions/WeaponsMenu"));
             for (int i = 1; i < 11; i++)
                 menuOptions.Add(Content.Load<Texture2D>("MenuOptions/stage" + i + "Selection"));
+            menuOptions.Add(Content.Load<Texture2D>("MenuOptions/lockedStage"));
 
-            enemy1Attack = Content.Load<Texture2D>("EnemyMoves/b1Attack");
+            enemyAttacks.Add(Content.Load<Texture2D>("EnemyMoves/b1Attack"));
 
             for (int i = 1; i < 6; i++)
                 punchAnimation.Add(Content.Load<Texture2D>("charAttacks/punch" + i));
@@ -309,7 +314,7 @@ namespace JJK_Undertale_Final
                         Rectangle projectileR = new Rectangle((int)projectile.Position.X - 12, (int)projectile.Position.Y - 12, 24, 24);
                         if (projectileR.Intersects(soulSpriteR) && invincibilityTime <= 0f)
                         {
-                            charHealth -= 10;
+                            charHealth -= 5;
                             invincibilityTime = 1f;
                             b1Projectiles.RemoveAt(i);
                             particleEngine.Enabled = true;
@@ -342,6 +347,10 @@ namespace JJK_Undertale_Final
                         titleTime = 0f;
                     }
                 }
+                else if (battle == Battle.b2 && dodgePhase)
+                {
+
+                }
             }
 
             else if (screen == Screen.Select)
@@ -363,8 +372,6 @@ namespace JJK_Undertale_Final
                         rewardsAccepted = false;
                         screen = Screen.BattleRewards;
                     }
-                    else if (charHealth <= 0)
-                        screen = Screen.Lose;
                     else
                     {
                         screen = Screen.Battle;
@@ -392,8 +399,13 @@ namespace JJK_Undertale_Final
                     showStagesMenu = true;
                     stage1Selecting = true;
                 }
-                if (showStagesMenu)
+                else if (showStagesMenu)
                 {
+                    if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                    {
+                        showStagesMenu = false;
+                        stageSelecting = true;
+                    }
                     MoveStagesSelection();
                     if (stage1Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
@@ -409,6 +421,23 @@ namespace JJK_Undertale_Final
                         invincibilityTime = 0f;
 
                         b1Projectiles.Clear();
+                        charHealth = charHealthMax;
+                        enemyHealth = enemyHealthMax;
+                        playerAttack.Reset();
+                    }
+                    if (stage2Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    {
+
+                        showStagesMenu = false;
+                        stage2Selecting = false;
+                        stageSelecting = true;
+                        screen = Screen.Battle;
+                        battle = Battle.b2;
+                        dodgePhase = true;
+                        dodgeTime = 15f;
+                        projectileTime = 0f;
+                        invincibilityTime = 0f;
+
                         charHealth = charHealthMax;
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
@@ -454,8 +483,30 @@ namespace JJK_Undertale_Final
                     _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
                     foreach (b1Projectile b1projectile in b1Projectiles)
                     {
-                        _spriteBatch.Draw(enemy1Attack, b1projectile.Position, null, Color.White, b1projectile.Rotation, new Vector2(enemy1Attack.Width / 2f, enemy1Attack.Height / 2f), 0.5f, SpriteEffects.None, 0f);
+                        _spriteBatch.Draw(enemyAttacks[0], b1projectile.Position, null, Color.White, b1projectile.Rotation, new Vector2(enemyAttacks[0].Width / 2f, enemyAttacks[0].Height / 2f), 0.5f, SpriteEffects.None, 0f);
                     }
+                    if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
+                        _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
+                    particleEngine.Draw(_spriteBatch);
+                    _spriteBatch.Draw(emptyBox, healthBox, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                }
+                else if (battle == Battle.b2)
+                {
+                    _spriteBatch.Draw(backgrounds[2], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(enemyTextures[1], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
                         _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
                     particleEngine.Draw(_spriteBatch);
@@ -494,6 +545,30 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
                     playerAttack.Draw(_spriteBatch);
                 }
+                else if (battle == Battle.b2)
+                {
+                    _spriteBatch.Draw(backgrounds[2], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(enemyTextures[1], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                    if (punchSelecting)
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
+                    else
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
+                    playerAttack.Draw(_spriteBatch);
+                }    
             }
             else if (screen == Screen.BattleRewards)
             {
@@ -569,6 +644,22 @@ namespace JJK_Undertale_Final
                     else
                         _spriteBatch.Draw(menuOptions[12], new Rectangle(1150, 725, 300, 130), Color.White);
                     _spriteBatch.DrawString(stagesFont, "Sukuna", new Vector2(1220, 855), Color.White);
+                    if (!stage3Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(700, 375, 300, 130), Color.White * 0.7f);
+                    if (!stage4Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(700, 550, 300, 130), Color.White * 0.7f);
+                    if (!stage5Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(700, 725, 300, 130), Color.White * 0.7f);
+                    if (!stage6Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(1150, 25, 300, 130), Color.White * 0.7f);
+                    if (!stage7Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(1150, 200, 300, 130), Color.White * 0.7f);
+                    if (!stage8Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(1150, 375, 300, 130), Color.White * 0.7f);
+                    if (!stage9Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(1150, 550, 300, 130), Color.White * 0.7f);
+                    if (!stage10Unlock)
+                        _spriteBatch.Draw(menuOptions[13], new Rectangle(1150, 725, 300, 130), Color.White * 0.7f);
                 }
             }
             _spriteBatch.End();
@@ -1166,27 +1257,27 @@ namespace JJK_Undertale_Final
                 stage1Selecting = false;
                 stage2Selecting = true;
             }
-            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage3Unlock)
             {
                 stage2Selecting = false;
                 stage3Selecting = true;
             }
-            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage4Unlock)
             {
                 stage3Selecting = false;
                 stage4Selecting = true;
             }
-            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage5Unlock)
             {
                 stage4Selecting = false;
                 stage5Selecting = true;
             }
-            else if (stage5Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage5Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage4Unlock)
             {
                 stage5Selecting = false;
                 stage4Selecting = true;
             }
-            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage3Unlock)
             {
                 stage4Selecting = false;
                 stage3Selecting = true;
@@ -1201,27 +1292,27 @@ namespace JJK_Undertale_Final
                 stage2Selecting = false;
                 stage1Selecting = true;
             }
-            else if (stage1Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage1Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage6Unlock)
             {
                 stage1Selecting = false;
                 stage6Selecting = true;
             }
-            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage2Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage7Unlock)
             {
                 stage2Selecting = false;
                 stage7Selecting = true;
             }
-            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage3Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage8Unlock)
             {
                 stage3Selecting = false;
                 stage8Selecting = true;
             }
-            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage4Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage9Unlock)
             {
                 stage4Selecting = false;
                 stage9Selecting = true;
             }
-            else if (stage5Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage5Selecting && gamePadCurrent.ThumbSticks.Left.X > 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage10Unlock)
             {
                 stage5Selecting = false;
                 stage10Selecting = true;
@@ -1236,62 +1327,62 @@ namespace JJK_Undertale_Final
                 stage7Selecting = false;
                 stage2Selecting = true;
             }
-            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage3Unlock)
             {
                 stage8Selecting = false;
                 stage3Selecting = true;
             }
-            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage4Unlock)
             {
                 stage9Selecting = false;
                 stage4Selecting = true;
             }
-            else if (stage10Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f)
+            else if (stage10Selecting && gamePadCurrent.ThumbSticks.Left.X < 0f && gamePadOld.ThumbSticks.Left.X == 0f && stage5Unlock)
             {
                 stage10Selecting = false;
                 stage5Selecting = true;
             }
-            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage7Unlock)
             {
                 stage6Selecting = false;
                 stage7Selecting = true;
             }
-            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage8Unlock)
             {
                 stage7Selecting = false;
                 stage8Selecting = true;
             }
-            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage9Unlock)
             {
                 stage8Selecting = false;
                 stage9Selecting = true;
             }
-            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.Y < 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage10Unlock)
             {
                 stage9Selecting = false;
                 stage10Selecting = true;
             }
-            else if (stage10Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage10Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage9Unlock)
             {
                 stage10Selecting = false;
                 stage9Selecting = true;
             }
-            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage9Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage8Unlock)
             {
                 stage9Selecting = false;
                 stage8Selecting = true;
             }
-            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage8Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage7Unlock)
             {
                 stage8Selecting = false;
                 stage7Selecting = true;
             }
-            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage7Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage6Unlock)
             {
                 stage7Selecting = false;
                 stage6Selecting = true;
             }
-            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f)
+            else if (stage6Selecting && gamePadCurrent.ThumbSticks.Left.Y > 0f && gamePadOld.ThumbSticks.Left.Y == 0f && stage5Unlock)
             {
                 stage6Selecting = false;
                 stage5Selecting = true;
