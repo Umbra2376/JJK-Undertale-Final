@@ -386,7 +386,7 @@ namespace JJK_Undertale_Final
             else if (screen == Screen.Menu)
             {
                 MoveInMenu();
-                if (stageSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed)
+                if (stageSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                 {
                     stageSelecting = false;
                     showStagesMenu = true;
@@ -395,8 +395,12 @@ namespace JJK_Undertale_Final
                 if (showStagesMenu)
                 {
                     MoveStagesSelection();
-                    if (stage1Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadCurrent.Buttons.B == ButtonState.Released)
+                    if (stage1Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
+                        
+                        showStagesMenu = false;
+                        stage1Selecting = false;
+                        stageSelecting = true;
                         screen = Screen.Battle;
                         battle = Battle.b1;
                         dodgePhase = true;
