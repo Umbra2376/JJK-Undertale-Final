@@ -247,7 +247,7 @@
 /processorParam:Version=3.8.5.1
 /build:EnemyMoves/b1Attack.psd
 
-#begin EnemyMoves/b2Attack1
+#begin EnemyMoves/b2Attack
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -258,20 +258,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:EnemyMoves/b2Attack1
-
-#begin EnemyMoves/b2Attack2
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/processorParam:Version=3.8.5.1
-/build:EnemyMoves/b2Attack2
+/build:EnemyMoves/b2Attack
 
 #begin Fonts/JJKFont.ttf
 /copy:Fonts/JJKFont.ttf

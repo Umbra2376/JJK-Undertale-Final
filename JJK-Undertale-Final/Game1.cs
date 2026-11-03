@@ -36,7 +36,7 @@ namespace JJK_Undertale_Final
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.Title;
+        Screen screen = Screen.Battle;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
@@ -55,11 +55,11 @@ namespace JJK_Undertale_Final
 
         float projectileSpeed = 300f;
         float projectileTime = 0f;
-        float projectileInterval = 0.8f;
+        float projectileInterval = 0.4f;
         float particleTime = 0f;
 
         float soulSpeed = 300f;
-        float dodgeTime = 15f;
+        float dodgeTime = 1f;
         int charHealth = 100, charHealthMax = 100;
         bool dodgePhase = true;
         int enemyHealth = 100, enemyHealthMax = 100;

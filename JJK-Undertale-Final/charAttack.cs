@@ -15,7 +15,7 @@ namespace JJK_Undertale_Final
         private int _frame;
         private float timer;
         private float _frameDuration = 0.12f;
-        public int _damage { get; } = 20;
+        public int _damage { get; } = 100;
         public bool _isPunching { get; private set; }
         private Rectangle _punchR = new Rectangle(700, 100, 200, 300);
         

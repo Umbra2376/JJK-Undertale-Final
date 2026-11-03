@@ -12,7 +12,19 @@ using System.Reflection.Metadata;
 
 namespace JJK_Undertale_Final
 {
-    internal class b2Projectile
-{
-}
+    public class b2Projectile
+    {
+        private Vector2 _position;
+        private Vector2 _direction;
+        private float _rotation;
+        private Texture2D _texture;
+
+        public b2Projectile(Vector2 position, Vector2 direction, float rotation, Texture2D texture)
+        {
+            _position = position;
+            _direction = direction;
+            _rotation = rotation;
+            _texture = texture;
+        }
+    }
 }
