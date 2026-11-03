@@ -1,14 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
-using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
-using System.Collections.Generic;
-using System;
-using System.Data;
-using System.Security.Cryptography.X509Certificates;
-using System.ComponentModel.Design;
-using System.Reflection.Metadata;
 
 namespace JJK_Undertale_Final
 {
@@ -19,12 +10,42 @@ namespace JJK_Undertale_Final
         private float _rotation;
         private Texture2D _texture;
 
+        private float _speed = 180f;
+
         public b2Projectile(Vector2 position, Vector2 direction, float rotation, Texture2D texture)
         {
             _position = position;
             _direction = direction;
+            _direction.Normalize();
             _rotation = rotation;
             _texture = texture;
+        }
+
+        public void Update(GameTime gameTime)
+        {
+            float deltaTime =
+                (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            _position += _direction * _speed * deltaTime;
+            _rotation += 2f * deltaTime;
+        }
+
+        public void Draw(SpriteBatch spriteBatch)
+        {
+            spriteBatch.Draw( _texture, _position, null, Color.White, _rotation, new Vector2(_texture.Width / 2f, _texture.Height / 2f), 0.03f, SpriteEffects.None, 0f);
+        }
+
+        public Rectangle Hitbox
+        {
+            get
+            {
+                return new Rectangle((int)_position.X - 10, (int)_position.Y - 10, 1, 1);
+            }
+        }
+
+        public Vector2 Position
+        {
+            get { return _position; }
         }
     }
 }
