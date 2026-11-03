@@ -52,6 +52,11 @@ namespace JJK_Undertale_Final
         List<Texture2D> menuOptions = new List<Texture2D>();
         List<Texture2D> enemyAttacks = new List<Texture2D>();
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
+        List<b2Projectile> b2Projectiles = new List<b2Projectile>();
+
+        float b2AttackTime = 0f;
+        float b2AttackInterval = 2.5f;
+        float b2AttackAngle = 0f;
 
         float projectileSpeed = 300f;
         float projectileTime = 0f;
@@ -186,6 +191,7 @@ namespace JJK_Undertale_Final
             menuOptions.Add(Content.Load<Texture2D>("MenuOptions/lockedStage"));
 
             enemyAttacks.Add(Content.Load<Texture2D>("EnemyMoves/b1Attack"));
+            enemyAttacks.Add(Content.Load<Texture2D>("EnemyMoves/b2Attack"));
 
             for (int i = 1; i < 6; i++)
                 punchAnimation.Add(Content.Load<Texture2D>("charAttacks/punch" + i));
@@ -291,19 +297,13 @@ namespace JJK_Undertale_Final
                     soulSpriteR.X += (int)(movement.X * soulSpeed * battleTime);
                     soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
 
-                    if (soulSpriteR.Left < dodgeBoxR.Left)
-                        soulSpriteR.X = dodgeBoxR.Left;
-                    if (soulSpriteR.Right > dodgeBoxR.Right)
-                        soulSpriteR.X = dodgeBoxR.Right - soulSpriteR.Width;
-                    if (soulSpriteR.Top < dodgeBoxR.Top)
-                        soulSpriteR.Y = dodgeBoxR.Top;
-                    if (soulSpriteR.Bottom > dodgeBoxR.Bottom)
-                        soulSpriteR.Y = dodgeBoxR.Bottom - soulSpriteR.Height;
+                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
+                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
 
                     projectileTime += battleTime;
                     if (projectileTime >= projectileInterval)
                     {
-                        SpawnProjectiles();
+                        Spawnb1Projectiles();
                         projectileTime = 0f;
                     }
 
@@ -348,8 +348,59 @@ namespace JJK_Undertale_Final
                     }
                 }
                 else if (battle == Battle.b2 && dodgePhase)
-                {
+                {         
+                    Vector2 movement = gamePadCurrent.ThumbSticks.Left;
+                    movement.Y *= -1;
 
+                    if (movement.LengthSquared() > 1f)
+                        movement.Normalize();
+
+                    soulSpriteR.X += (int)(movement.X * soulSpeed * battleTime);
+                    soulSpriteR.Y += (int)(movement.Y * soulSpeed * battleTime);
+                    
+                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
+                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
+
+                    b2AttackTime += battleTime;
+                    if (b2AttackTime >= b2AttackInterval)
+                    {
+                        SpawnB2Projectiles();
+                        b2AttackTime = 0f;
+                    }
+
+                    for (int i = b2Projectiles.Count - 1; i >= 0; i--)
+                    {
+                        b2Projectile projectile = b2Projectiles[i];
+                        projectile.Update(gameTime);
+
+                        Rectangle b2SoulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 4, 12, 12);
+
+                        if (projectile.Hitbox.Intersects(b2SoulHitbox) && invincibilityTime <= 0f)
+                        {
+                            charHealth -= 5;
+                            invincibilityTime = 1f;
+
+                            b2Projectiles.RemoveAt(i);
+                            continue;
+                        }
+
+                        if (projectile.Position.X < dodgeBoxR.Left - 300 || projectile.Position.X > dodgeBoxR.Right + 300 || projectile.Position.Y < dodgeBoxR.Top - 300 || projectile.Position.Y > dodgeBoxR.Bottom + 300)
+                            b2Projectiles.RemoveAt(i);
+                    }
+
+                    if (invincibilityTime > 0f)
+                        invincibilityTime -= battleTime;
+
+                    dodgeTime -= battleTime;
+                    if (charHealth <= 0)
+                        screen = Screen.Lose;
+                    else if (dodgeTime <= 0f)
+                    {
+                        dodgePhase = false;
+                        b2Projectiles.Clear();
+                        screen = Screen.Select;
+                        titleTime = 0f;
+                    }
                 }
             }
 
@@ -379,6 +430,9 @@ namespace JJK_Undertale_Final
                         dodgeTime = 15f;
                         projectileTime = 0f;
                         b1Projectiles.Clear();
+                        b2Projectiles.Clear();
+                        b2AttackTime = 0f;
+                        b2AttackAngle = 0f;
                     }
                 }
             }
@@ -507,8 +561,12 @@ namespace JJK_Undertale_Final
                     _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
                     _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
+                    foreach (b2Projectile projectile in b2Projectiles)
+                    {
+                        projectile.Draw(_spriteBatch);
+                    }
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
-                        _spriteBatch.Draw(soulSpirteT, soulSpriteR, Color.White);
+                        _spriteBatch.Draw(soulSpirteT, new Rectangle(soulSpriteR.X, soulSpriteR.Y, 20, 20), Color.White);
                     particleEngine.Draw(_spriteBatch);
                     _spriteBatch.Draw(emptyBox, healthBox, Color.White);
                     _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
@@ -689,7 +747,7 @@ namespace JJK_Undertale_Final
                 _spriteBatch.DrawString(titleFont, "Press START to start", startOption, Color.White);
             }
         }
-        void SpawnProjectiles()
+        void Spawnb1Projectiles()
         {
             Vector2 spawnPosition = Vector2.Zero;
             int side = random.Next(4);
@@ -719,6 +777,28 @@ namespace JJK_Undertale_Final
 
             b1Projectiles.Add(new b1Projectile(spawnPosition, direction, rotation));
         }
+        void SpawnB2Projectiles()
+        {
+            Vector2 soulCenter = new Vector2(soulSpriteR.X + 10, soulSpriteR.Y + 10);
+
+            int projectileCount = 12;
+            float radius = 250f;
+
+            for (int i = 0; i < projectileCount; i++)
+            {
+                float angle = MathHelper.TwoPi * i / projectileCount + b2AttackAngle;
+
+                Vector2 spawnPosition = soulCenter + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius;
+                Vector2 direction = soulCenter - spawnPosition;
+                direction.Normalize();
+
+                float rotation = (float)Math.Atan2(direction.Y, direction.X);
+
+                b2Projectiles.Add(new b2Projectile(spawnPosition, direction, rotation, enemyAttacks[1]));
+            }
+            b2AttackAngle += 0.25f;
+        }
+
         void AddSkillandWeapons()
         {
             if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
