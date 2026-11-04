@@ -39,7 +39,7 @@ namespace JJK_Undertale_Final
         {
             get
             {
-                return new Rectangle((int)_position.X - 10, (int)_position.Y - 10, 1, 1);
+                return new Rectangle((int)_position.X - 10, (int)_position.Y - 10, 10, 10);
             }
         }
 

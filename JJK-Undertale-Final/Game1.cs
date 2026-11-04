@@ -36,7 +36,7 @@ namespace JJK_Undertale_Final
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.Battle;
+        Screen screen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
@@ -60,7 +60,7 @@ namespace JJK_Undertale_Final
 
         float projectileSpeed = 300f;
         float projectileTime = 0f;
-        float projectileInterval = 0.4f;
+        float projectileInterval = 0.8f;
         float particleTime = 0f;
 
         float soulSpeed = 300f;
@@ -373,7 +373,7 @@ namespace JJK_Undertale_Final
                         b2Projectile projectile = b2Projectiles[i];
                         projectile.Update(gameTime);
 
-                        Rectangle b2SoulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 4, 12, 12);
+                        Rectangle b2SoulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 4, 12, 20);
 
                         if (projectile.Hitbox.Intersects(b2SoulHitbox) && invincibilityTime <= 0f)
                         {
