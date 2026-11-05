@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 
 namespace JJK_Undertale_Final
@@ -10,14 +11,15 @@ namespace JJK_Undertale_Final
         {
             punch, weapon, explodingFlesh, strawDoll, miracle, ice, blood, projection, ratio, RCT, curseControl, bugArmour, graniteBlast, dismantle, cleave, blue, red, fuga, purple
         }
+        private Random _BFchance = new Random();
         private Attack _attack;
         private List<Texture2D> _frames = new List<Texture2D>();
-        private int _frame;
+        private int _frame, _BF;
         private float timer;
         private float _frameDuration = 0.12f;
-        public int _damage { get; } = 20;
+        public int _damage;
         public bool _isPunching { get; private set; }
-        private Rectangle _punchR = new Rectangle(700, 100, 200, 300);
+        private Rectangle _punchR = new Rectangle(570, 60, 350, 350);
         
         public charAttack(List<Texture2D> frames)
         {
@@ -29,6 +31,13 @@ namespace JJK_Undertale_Final
         {
             if (_isPunching || _frames.Count == 0)
                 return;
+
+            _BF = _BFchance.Next(1, 101);
+
+            if (_BF == 1)
+                _damage = 500;
+            else
+                _damage = 20;
 
             _isPunching = true;
             _frame = 0;
@@ -67,6 +76,10 @@ namespace JJK_Undertale_Final
             _isPunching = false;
             _frame = 0;
             timer = 0f;
+        }
+        public int Damage
+        {
+            get { return _damage; }
         }
     }
 }

@@ -65,7 +65,7 @@
 /processorParam:Version=3.8.5.1
 /build:CEbar.png
 
-#begin charAttacks/blackFlash.psd
+#begin charAttacks/punch1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -76,20 +76,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:charAttacks/blackFlash.psd
-
-#begin charAttacks/punch1.psd
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/processorParam:Version=3.8.5.1
-/build:charAttacks/punch1.psd
+/build:charAttacks/punch1.png
 
 #begin charAttacks/punch2.png
 /importer:TextureImporter

@@ -43,7 +43,11 @@ namespace JJK_Undertale_Final
         }
         Battle battle;
         List<string> skillList = new List<string>();
+        List<string> equippedSkills = new List<string>();
+        int skillMenuIndex = 0;
         List<string> weaponList = new List<string>();
+        int weaponMenuIndex = 0;
+        string selectedWeapon = "";
         List<Texture2D> skillIcons = new List<Texture2D>();
         List<Texture2D> weaponIcons = new List<Texture2D>();
         List<Texture2D> enemyTextures = new List<Texture2D>();
@@ -54,7 +58,7 @@ namespace JJK_Undertale_Final
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
         List<b2Projectile> b2Projectiles = new List<b2Projectile>();
 
-        float b2AttackTime = 0f;
+        float b2AttackTime = 8f;
         float b2AttackInterval = 2.5f;
         float b2AttackAngle = 0f;
 
@@ -377,7 +381,7 @@ namespace JJK_Undertale_Final
 
                         if (projectile.Hitbox.Intersects(b2SoulHitbox) && invincibilityTime <= 0f)
                         {
-                            charHealth -= 5;
+                            charHealth -= 10;
                             invincibilityTime = 1f;
 
                             b2Projectiles.RemoveAt(i);
@@ -411,7 +415,7 @@ namespace JJK_Undertale_Final
 
                 if (playerAttack.Update(gameTime))
                 {
-                    enemyHealth -= playerAttack._damage;
+                    enemyHealth -= playerAttack.Damage;
                     if (enemyHealth < 0)
                         enemyHealth = 0;
                     if (charHealth <= 0)
@@ -446,12 +450,25 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Menu)
             {
-                MoveInMenu();
+                if (!showSkillMenu && !showStagesMenu && !showWeaponMenu)
+                    MoveInMenu();
                 if (stageSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                 {
                     stageSelecting = false;
                     showStagesMenu = true;
                     stage1Selecting = true;
+                }
+                else if (weaponSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                {
+                    showWeaponMenu = true;
+                    weaponSelecting = false;
+                    weaponMenuIndex = 0;
+                }
+                else if (skillSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                {
+                    showSkillMenu = true;
+                    skillSelecting = false;
+                    skillMenuIndex = 0;
                 }
                 else if (showStagesMenu)
                 {
@@ -492,11 +509,115 @@ namespace JJK_Undertale_Final
                         projectileTime = 0f;
                         invincibilityTime = 0f;
 
+                        enemyHealthMax = 150;
                         charHealth = charHealthMax;
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
                     }
+                }
+                else if (showWeaponMenu)
+                {
+                    if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                    {
+                        showWeaponMenu = false;
+                        weaponSelecting = true;
+                    }
 
+                    if (weaponList.Count > 0)
+                    {
+                        if (gamePadCurrent.ThumbSticks.Left.X > 0.5f &&
+                            gamePadOld.ThumbSticks.Left.X <= 0.5f)
+                        {
+                            weaponMenuIndex++;
+
+                            if (weaponMenuIndex >= weaponList.Count)
+                                weaponMenuIndex = 0;
+                        }
+                        else if (gamePadCurrent.ThumbSticks.Left.X < -0.5f &&
+                            gamePadOld.ThumbSticks.Left.X >= -0.5f)
+                        {
+                            weaponMenuIndex--;
+
+                            if (weaponMenuIndex < 0)
+                                weaponMenuIndex = weaponList.Count - 1;
+                        }
+
+                        if (gamePadCurrent.ThumbSticks.Left.Y < -0.5f &&
+                            gamePadOld.ThumbSticks.Left.Y >= -0.5f)
+                        {
+                            weaponMenuIndex += 4;
+
+                            if (weaponMenuIndex >= weaponList.Count)
+                                weaponMenuIndex = 0;
+                        }
+                        else if (gamePadCurrent.ThumbSticks.Left.Y > 0.5f &&
+                            gamePadOld.ThumbSticks.Left.Y <= 0.5f)
+                        {
+                            weaponMenuIndex -= 4;
+
+                            if (weaponMenuIndex < 0)
+                                weaponMenuIndex = weaponList.Count - 1;
+                        }
+
+                        if (gamePadCurrent.Buttons.B == ButtonState.Pressed &&
+                            gamePadOld.Buttons.B == ButtonState.Released)
+                        {
+                            selectedWeapon = weaponList[weaponMenuIndex];
+                        }
+                    }
+                }
+                else if (showSkillMenu)
+                {
+                    if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                    {
+                        showSkillMenu = false;
+                        skillSelecting = true;
+                    }
+
+                    if (skillList.Count > 0)
+                    {
+                        if (gamePadCurrent.ThumbSticks.Left.X > 0.5f && gamePadOld.ThumbSticks.Left.X <= 0.5f)
+                        {
+                            skillMenuIndex++;
+
+                            if (skillMenuIndex >= skillList.Count)
+                                skillMenuIndex = 0;
+                        }
+                        else if (gamePadCurrent.ThumbSticks.Left.X < -0.5f && gamePadOld.ThumbSticks.Left.X >= -0.5f)
+                        {
+                            skillMenuIndex--;
+
+                            if (skillMenuIndex < 0)
+                                skillMenuIndex = skillList.Count - 1;
+                        }
+                        if (gamePadCurrent.ThumbSticks.Left.Y < -0.5f && gamePadOld.ThumbSticks.Left.Y >= -0.5f)
+                        {
+                            skillMenuIndex += 4;
+
+                            if (skillMenuIndex >= skillList.Count)
+                                skillMenuIndex = 0;
+                        }
+                        else if (gamePadCurrent.ThumbSticks.Left.Y > 0.5f && gamePadOld.ThumbSticks.Left.Y <= 0.5f)
+                        {
+                            skillMenuIndex -= 4;
+
+                            if (skillMenuIndex < 0)
+                                skillMenuIndex = skillList.Count - 1;
+                        }
+                        if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                        {
+                            string skill = skillList[skillMenuIndex];
+
+                            if (equippedSkills.Contains(skill))
+                            {
+                                equippedSkills.Remove(skill);
+                            }
+                            else if (equippedSkills.Count < 3)
+                            {
+                                equippedSkills.Add(skill);
+                            }
+                        }
+                    }
                 }
             }    
                 base.Update(gameTime);
@@ -719,6 +840,10 @@ namespace JJK_Undertale_Final
                     if (!stage10Unlock)
                         _spriteBatch.Draw(menuOptions[13], new Rectangle(1150, 725, 300, 130), Color.White * 0.7f);
                 }
+                else if (showWeaponMenu)
+                    DrawWeaponMenu();
+                else if (showSkillMenu)
+                    DrawSkillMenu();
             }
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -798,7 +923,6 @@ namespace JJK_Undertale_Final
             }
             b2AttackAngle += 0.25f;
         }
-
         void AddSkillandWeapons()
         {
             if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
@@ -1467,6 +1591,202 @@ namespace JJK_Undertale_Final
                 stage6Selecting = false;
                 stage5Selecting = true;
             }
+        }
+        int GetWeaponIconIndex(string weapon)
+        {
+            switch (weapon)
+            {
+                case "slaughterDemon": return 0;
+                case "handSword": return 1;
+                case "basicKatana": return 2;
+                case "cursedSpear": return 3;
+                case "ratioKnife": return 4;
+                case "cursedSword": return 5;
+                case "mallet": return 6;
+                case "dragonBone": return 7;
+                case "splitSoul": return 8;
+                case "festeringLife": return 9;
+                case "playfulCloud": return 10;
+                case "invertedSpear": return 11;
+
+                default: return -1;
+            }
+        }
+        string GetWeaponName(string weapon)
+        {
+            switch (weapon)
+            {
+                case "slaughterDemon": return "Slaughter Demon";
+                case "handSword": return "Hand Sword";
+                case "basicKatana": return "Basic Katana";
+                case "cursedSpear": return "Cursed Spear";
+                case "ratioKnife": return "Ratio Knife";
+                case "cursedSword": return "Cursed Sword";
+                case "mallet": return "Mallet";
+                case "dragonBone": return "Dragon Bone";
+                case "splitSoul": return "Split Soul";
+                case "festeringLife": return "Festering Life";
+                case "playfulCloud": return "Playful Cloud";
+                case "invertedSpear": return "Inverted Spear";
+
+                default: return "Unknown Weapon";
+            }
+        }
+        void DrawWeaponMenu()
+        {
+            _spriteBatch.Draw(emptyBox, new Rectangle(400, 40, 1050, 820), Color.White);
+            _spriteBatch.DrawString(titleFont, "WEAPON SELECTION", new Vector2(700, 70), Color.White);
+
+            if (weaponList.Count == 0)
+            {
+                _spriteBatch.DrawString(titleFont, "You haven't obtained any weapons!", new Vector2(650, 400), Color.White);
+                return;
+            }
+
+            for (int i = 0; i < weaponList.Count; i++)
+            {
+                int x = 500 + (i % 4 * 230);
+                int y = 150 + (i / 4 * 210);
+
+                Rectangle weaponR = new Rectangle(x, y, 200, 180);
+                if (i == weaponMenuIndex)
+                    _spriteBatch.Draw(emptyBox, weaponR, Color.Yellow);
+                else
+                    _spriteBatch.Draw(emptyBox, weaponR, Color.White);
+
+                int iconIndex = GetWeaponIconIndex(weaponList[i]);
+                if (iconIndex != -1)
+                    _spriteBatch.Draw(weaponIcons[iconIndex], new Rectangle(x + 25, y + 15, 150, 105), Color.White);
+
+                _spriteBatch.DrawString(stagesFont,
+                    GetWeaponName(weaponList[i]),
+                    new Vector2(x + 10, y + 130), Color.White);
+
+                if (selectedWeapon == weaponList[i])
+                    _spriteBatch.DrawString(stagesFont, "EQUIPPED", new Vector2(x + 10, y + 155), Color.Green);
+            }
+
+            _spriteBatch.DrawString(stagesFont, "A - Equip     B - Back", new Vector2(700, 850), Color.White);
+        }
+        int GetSkillIconIndex(string skill)
+        {
+            switch (skill)
+            {
+                case "explodingFlesh": return 0;
+                case "strawDoll": return 1;
+                case "miracle": return 2;
+                case "ice": return 3;
+                case "blood": return 4;
+                case "projection": return 5;
+                case "ratio": return 6;
+                case "RCT": return 7;
+                case "curseControl": return 8;
+                case "bugArmour": return 9;
+                case "graniteBlast": return 10;
+                case "dismantle": return 11;
+                case "cleave": return 12;
+                case "beastAmber": return 13;
+                case "blue": return 14;
+                case "red": return 15;
+                case "fuga": return 16;
+                case "purple": return 17;
+
+                default: return -1;
+            }
+        }
+        string GetSkillName(string skill)
+        {
+            switch (skill)
+            {
+                case "explodingFlesh": return "Exploding Flesh";
+                case "strawDoll": return "Straw Doll";
+                case "miracle": return "Miracle";
+                case "ice": return "Ice";
+                case "blood": return "Blood";
+                case "projection": return "Projection";
+                case "ratio": return "Ratio";
+                case "RCT": return "RCT";
+                case "curseControl": return "Curse Control";
+                case "bugArmour": return "Bug Armour";
+                case "graniteBlast": return "Granite Blast";
+                case "dismantle": return "Dismantle";
+                case "cleave": return "Cleave";
+                case "beastAmber": return "Beast Amber";
+                case "blue": return "Blue";
+                case "red": return "Red";
+                case "fuga": return "Fuga";
+                case "purple": return "Purple";
+
+                default: return "Unknown Skill";
+            }
+        }
+        void DrawSkillMenu()
+        {
+            _spriteBatch.Draw(emptyBox,
+                new Rectangle(400, 40, 1050, 820),
+                Color.White);
+
+            _spriteBatch.DrawString(titleFont,
+                "SKILL SELECTION",
+                new Vector2(700, 70),
+                Color.White);
+
+            _spriteBatch.DrawString(stagesFont,
+                "Equipped: " + equippedSkills.Count + "/3",
+                new Vector2(800, 150),
+                Color.White);
+
+            if (skillList.Count == 0)
+            {
+                _spriteBatch.DrawString(titleFont,
+                    "You haven't obtained any skills!",
+                    new Vector2(600, 400),
+                    Color.White);
+
+                return;
+            }
+
+            for (int i = 0; i < skillList.Count; i++)
+            {
+                int x = 500 + (i % 4 * 230);
+                int y = 200 + (i / 4 * 175);
+
+                Rectangle skillR = new Rectangle(x, y, 200, 155);
+
+                // Highlight selected skill
+                if (i == skillMenuIndex)
+                    _spriteBatch.Draw(emptyBox, skillR, Color.Yellow);
+                else
+                    _spriteBatch.Draw(emptyBox, skillR, Color.White);
+
+                int iconIndex = GetSkillIconIndex(skillList[i]);
+
+                if (iconIndex != -1)
+                {
+                    _spriteBatch.Draw(skillIcons[iconIndex],
+                        new Rectangle(x + 35, y + 5, 130, 95),
+                        Color.White);
+                }
+
+                _spriteBatch.DrawString(stagesFont,
+                    GetSkillName(skillList[i]),
+                    new Vector2(x + 10, y + 105),
+                    Color.White);
+
+                // Show whether the skill is equipped
+                if (equippedSkills.Contains(skillList[i]))
+                {
+                    _spriteBatch.DrawString(stagesFont,
+                        "EQUIPPED",
+                        new Vector2(x + 10, y + 130),
+                        Color.Green);
+                }
+            }
+
+            _spriteBatch.DrawString(stagesFont,
+                "A - Equip/Unequip     B - Back",
+                new Vector2(700, 850),
+                Color.White);
         }
     }
 }
