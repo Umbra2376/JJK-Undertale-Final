@@ -53,6 +53,7 @@ namespace JJK_Undertale_Final
         List<Texture2D> enemyTextures = new List<Texture2D>();
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
+        List<Texture2D> BFanimation = new List<Texture2D>();
         List<Texture2D> menuOptions = new List<Texture2D>();
         List<Texture2D> enemyAttacks = new List<Texture2D>();
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
@@ -199,8 +200,10 @@ namespace JJK_Undertale_Final
 
             for (int i = 1; i < 6; i++)
                 punchAnimation.Add(Content.Load<Texture2D>("charAttacks/punch" + i));
+            for (int i = 1; i < 6; i++)
+                BFanimation.Add(Content.Load<Texture2D>("charAttacks/BF" + i));
 
-            playerAttack = new charAttack(punchAnimation);
+            playerAttack = new charAttack(punchAnimation, BFanimation);
             MediaPlayer.Volume = 0.6f;
             // TODO: use this.Content to load your game content here
         }
