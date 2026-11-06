@@ -84,14 +84,15 @@ namespace JJK_Undertale_Final
         public void Draw(SpriteBatch spriteBatch)
         {
             if (_isPunching && _frame < _frames.Count && _BF != 1)
-                spriteBatch.Draw(_frames[_frame], _punchR, Color.White);
-            else if (_isPunching && _frame < _frames.Count && _BF == 1)
+                spriteBatch.Draw(_BFframes[_BFframe], _punchR, Color.White);
+            else if (_isPunching && _BFframe < _BFframes.Count && _BF == 1)
                 spriteBatch.Draw(_BFframes[_BFframe], _punchR, Color.White);
         }
         public void Reset()
         {
             _isPunching = false;
             _frame = 0;
+            _BFframe = 0;
             timer = 0f;
         }
         public int Damage

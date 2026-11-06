@@ -53,6 +53,7 @@ namespace JJK_Undertale_Final
         List<Texture2D> enemyTextures = new List<Texture2D>();
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
+        List<Texture2D> weaponAnimation = new List<Texture2D>();
         List<Texture2D> BFanimation = new List<Texture2D>();
         List<Texture2D> menuOptions = new List<Texture2D>();
         List<Texture2D> enemyAttacks = new List<Texture2D>();
