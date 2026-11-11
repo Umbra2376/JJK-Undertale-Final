@@ -1,3 +1,4 @@
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -7,111 +8,181 @@ namespace JJK_Undertale_Final
 {
     public class charAttack
     {
-        private enum Attack
+        public enum AttackType
         {
-            punch, weapon, explodingFlesh, strawDoll, miracle, ice, blood, projection, ratio, RCT, curseControl, bugArmour, graniteBlast, dismantle, cleave, blue, red, fuga, purple
+            Punch,
+            Weapon,
+            Skill
         }
-        private Random _BFchance = new Random();
-        private List<Texture2D> _punchFrames = new List<Texture2D>();
-        private List<Texture2D> _BFframes = new List<Texture2D>();
-        private List<Texture2D> _weaponFrames = new List<Texture2D>();
-        private int _punchFrame, _BF, _BFframe, _weaponFrame;
+
+        public enum EffectType
+        {
+            None,
+            Heal,
+            Speed,
+            Defence
+        }
+
+        private class AttackData
+        {
+            public List<Texture2D> Frames;
+            public int Damage;
+            public float FrameDuration;
+            public EffectType Effect;
+
+            public AttackData(
+                List<Texture2D> frames,
+                int damage,
+                float frameDuration,
+                EffectType effect)
+            {
+                Frames = frames;
+                Damage = damage;
+                FrameDuration = frameDuration;
+                Effect = effect;
+            }
+        }
+
+        private readonly Dictionary<string, AttackData>
+        attacks = new Dictionary<string, AttackData>();
+
+        private readonly Random random = new Random();
+
+        private AttackData currentAttack;
+        private int currentFrame;
         private float timer;
-        private float _frameDuration = 0.12f;
-        public int _damage;
-        public bool _isPunching { get; private set; }
-        public bool _isWeapon { get; private set; }
-        private Rectangle _punchR = new Rectangle(570, 60, 350, 350);
-        
-        public charAttack(List<Texture2D> punchFrames, List<Texture2D> BFframes, List<Texture2D> weaponFrames)
+
+        private Rectangle attackRectangle = new Rectangle(570, 60, 350, 350);
+
+        public bool IsAttacking { get; private set; }
+        public int Damage { get; private set; }
+        public int BF { get; private set; }
+        public string CurrentAttackName { get; private set; }
+        public AttackType CurrentType { get; private set; }
+        public EffectType CurrentEffect { get; private set; }
+
+        public charAttack()
         {
-            _punchFrames = punchFrames;
-            _BFframes = BFframes;
-            _weaponFrames = weaponFrames;
+            Reset();
         }
 
-        public void StartPunch()
+        public void AddAttack(string name, List<Texture2D> frames, int damage, float frameDuration = 0.12f, EffectType effect = EffectType.None)
         {
-            if (_isPunching || _punchFrames.Count == 0 || _BFframes.Count == 0)
-                return;
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Invalid attack name.");
 
-            _BF = _BFchance.Next(1, 101);
+            if (frames == null || frames.Count == 0)
+                throw new ArgumentException("An attack needs at least one frame.");
 
-            if (_BF == 1)
-                _damage = 500;
-            else
-                _damage = 20;
+            if (frameDuration <= 0f)
+                throw new ArgumentException("Frame duration must be positive.");
 
-            _isPunching = true;
-            _punchFrame = 0;
-            _BFframe = 0;
+            attacks[name] = new AttackData(frames, damage, frameDuration, effect);
+        }
+
+        public bool StartPunch()
+        {
+            if (IsAttacking)
+                return false;
+            bool blackFlash = random.Next(100) == 0;
+
+            string attackName =
+                blackFlash ? "blackFlash" : "punch";
+
+            bool started = StartAttack(
+                attackName, AttackType.Punch);
+
+            if (started)
+                BF = blackFlash ? 1 : 0;
+
+            return started;
+        }
+
+        public bool StartWeapon(string weaponName)
+        {
+            return StartAttack(
+                weaponName, AttackType.Weapon);
+        }
+
+        public bool StartSkill(string skillName)
+        {
+            return StartAttack(
+                skillName, AttackType.Skill);
+        }
+
+        private bool StartAttack(
+            string name, AttackType type)
+        {
+            if (IsAttacking)
+                return false;
+
+            if (!attacks.TryGetValue(name, out AttackData data))
+                return false;
+
+            currentAttack = data;
+            CurrentAttackName = name;
+            CurrentType = type;
+            CurrentEffect = data.Effect;
+
+            Damage = data.Damage;
+            currentFrame = 0;
             timer = 0f;
-        }
-        public void StartWeapon()
-        {
-            if (_isWeapon || _weaponFrames.Count == 0)
-                return;
+            BF = 0;
 
-            _isWeapon = true;
-            _weaponFrame = 0;
-            timer = 0f;
+            IsAttacking = true;
+            return true;
         }
+
         public bool Update(GameTime gameTime)
         {
-            if (!_isPunching)
+            if (!IsAttacking || currentAttack == null)
                 return false;
 
             timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            while (timer >= _frameDuration)
+            while (timer >= currentAttack.FrameDuration)
             {
-                timer -= _frameDuration;
+                timer -= currentAttack.FrameDuration;
+                currentFrame++;
 
-                if (_BF == 1)
+                if (currentFrame >= currentAttack.Frames.Count)
                 {
-                    _BFframe++;
-
-                    if (_BFframe >= _BFframes.Count)
-                    {
-                        Reset();
-                        return true;
-                    }
-                }
-                else
-                {
-                    _punchFrame++;
-
-                    if (_punchFrame >= _punchFrames.Count)
-                    {
-                        Reset();
-                        return true;
-                    }
+                    IsAttacking = false;
+                    currentAttack = null;
+                    currentFrame = 0;
+                    timer = 0f;
+                    return true;
                 }
             }
 
             return false;
         }
+
         public void Draw(SpriteBatch spriteBatch)
         {
-            if (_isPunching && _punchFrame < _punchFrames.Count && _BF != 1)
-                spriteBatch.Draw(_punchFrames[_punchFrame], _punchR, Color.White);
-            else if (_isPunching && _BFframe < _BFframes.Count && _BF == 1)
-                spriteBatch.Draw(_BFframes[_BFframe], _punchR, Color.White);
+            if (!IsAttacking || currentAttack == null)
+                return;
+
+            spriteBatch.Draw(currentAttack.Frames[currentFrame], attackRectangle, Color.White);
         }
+
+        public void SetAttackRectangle(Rectangle rectangle)
+        {
+            attackRectangle = rectangle;
+        }
+
         public void Reset()
         {
-            _isPunching = false;
-            _punchFrame = 0;
-            _BFframe = 0;
+            IsAttacking = false;
+            currentAttack = null;
+            currentFrame = 0;
             timer = 0f;
-        }
-        public int Damage
-        {
-            get { return _damage; }
-        }
-        public int BF
-        {
-            get { return _BF; }
+
+            Damage = 0;
+            BF = 0;
+            CurrentAttackName = "";
+            CurrentEffect = EffectType.None;
+            CurrentType = AttackType.Punch;
         }
     }
 }
