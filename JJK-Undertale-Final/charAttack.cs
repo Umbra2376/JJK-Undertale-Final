@@ -30,11 +30,7 @@ namespace JJK_Undertale_Final
             public float FrameDuration;
             public EffectType Effect;
 
-            public AttackData(
-                List<Texture2D> frames,
-                int damage,
-                float frameDuration,
-                EffectType effect)
+            public AttackData(List<Texture2D> frames, int damage, float frameDuration, EffectType effect)
             {
                 Frames = frames;
                 Damage = damage;
@@ -86,11 +82,9 @@ namespace JJK_Undertale_Final
                 return false;
             bool blackFlash = random.Next(100) == 0;
 
-            string attackName =
-                blackFlash ? "blackFlash" : "punch";
+            string attackName = blackFlash ? "blackFlash" : "punch";
 
-            bool started = StartAttack(
-                attackName, AttackType.Punch);
+            bool started = StartAttack(attackName, AttackType.Punch);
 
             if (started)
                 BF = blackFlash ? 1 : 0;
@@ -100,18 +94,15 @@ namespace JJK_Undertale_Final
 
         public bool StartWeapon(string weaponName)
         {
-            return StartAttack(
-                weaponName, AttackType.Weapon);
+            return StartAttack(weaponName, AttackType.Weapon);
         }
 
         public bool StartSkill(string skillName)
         {
-            return StartAttack(
-                skillName, AttackType.Skill);
+            return StartAttack(skillName, AttackType.Skill);
         }
 
-        private bool StartAttack(
-            string name, AttackType type)
+        private bool StartAttack(string name, AttackType type)
         {
             if (IsAttacking)
                 return false;

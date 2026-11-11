@@ -23,7 +23,7 @@ namespace JJK_Undertale_Final
         Song titleSong;
         bool punchSelectingB = true, weaponSelectingB, skillSelectingB, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
         bool stage1Selecting, stage2Selecting, stage3Selecting, stage4Selecting, stage5Selecting, stage6Selecting, stage7Selecting, stage8Selecting, stage9Selecting, stage10Selecting;
-        bool stage3Unlock, stage4Unlock, stage5Unlock, stage6Unlock, stage7Unlock, stage8Unlock, stage9Unlock, stage10Unlock;
+        bool stage2Unlock, stage3Unlock, stage4Unlock, stage5Unlock, stage6Unlock, stage7Unlock, stage8Unlock, stage9Unlock, stage10Unlock;
         Rectangle window, dodgeBoxR, soulSpriteR, charHR, charHBarR, charCEBarR, enemyHBarR, healthBox, battleMenu, skillBox, weaponBox;
         Rectangle stagesMenuR, skillsMenuR, weaponsMenuR;
         float titleO, titleTime, invincibilityTime;
@@ -551,6 +551,11 @@ namespace JJK_Undertale_Final
 
                     if (enemyHealth <= 0)
                     {
+                        if (battle == Battle.b1)
+                        {
+                            stage2Unlock = true;
+                            charHealthMax = 150; 
+                        }
                         rewardsGenerated = false;
                         rewardsAccepted = false;
                         screen = Screen.BattleRewards;
@@ -624,6 +629,7 @@ namespace JJK_Undertale_Final
                         invincibilityTime = 0f;
 
                         b1Projectiles.Clear();
+                        enemyHealthMax = 100;
                         charHealth = charHealthMax;
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
@@ -644,6 +650,7 @@ namespace JJK_Undertale_Final
                         projectileTime = 0f;
                         invincibilityTime = 0f;
 
+                        b2Projectiles.Clear();
                         enemyHealthMax = 150;
                         charHealth = charHealthMax;
                         enemyHealth = enemyHealthMax;
@@ -1934,7 +1941,6 @@ namespace JJK_Undertale_Final
 
             _spriteBatch.DrawString(stagesFont, "B - Equip/Unequip     A - Back", new Vector2(700, 850), Color.White);
         }
-
         private void DrawBattleSkillSelector()
         {
             if (!choosingBattleSkill || equippedSkills.Count == 0)
@@ -1951,46 +1957,56 @@ namespace JJK_Undertale_Final
             }
             _spriteBatch.DrawString(stagesFont, "B: Use   A: Cancel", new Vector2(780, 590), Color.White);
         }
-
         private List<Texture2D> LoadAttackFrames(string folder, string prefix, int frameCount)
         {
             List<Texture2D> frames = new List<Texture2D>();
 
             for (int i = 1; i <= frameCount; i++)
-                frames.Add(Content.Load<Texture2D>(folder + "/" + prefix + i));
+            {
+                string path = folder + "/" + prefix + i;
+
+                try
+                {
+                    frames.Add(Content.Load<Texture2D>(path));
+                }
+                catch (Microsoft.Xna.Framework.Content.ContentLoadException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("FAILED TO LOAD: " + path);
+                    System.Diagnostics.Debug.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+
             return frames;
         }
 
         private void RegisterSkills()
         {
-            TryRegisterSkill("explodingFlesh", 6, 30);
+            TryRegisterSkill("explodingFlesh", 7, 30);
             TryRegisterSkill("strawDoll", 6, 35);
             TryRegisterSkill("miracle", 6, 0, charAttack.EffectType.Defence);
             TryRegisterSkill("ice", 6, 45);
-            TryRegisterSkill("blood", 6, 50);
-            TryRegisterSkill("projection", 6, 0, charAttack.EffectType.Speed);
-            TryRegisterSkill("ratio", 6, 60);
-            TryRegisterSkill("RCT", 6, 0, charAttack.EffectType.Heal);
-            TryRegisterSkill("curseControl", 6, 70);
-            TryRegisterSkill("bugArmour", 6, 0, charAttack.EffectType.Defence);
-            TryRegisterSkill("graniteBlast", 6, 90);
-            TryRegisterSkill("dismantle", 6, 100);
-            TryRegisterSkill("cleave", 6, 110);
-            TryRegisterSkill("beastAmber", 6, 125);
-            TryRegisterSkill("blue", 6, 130);
-            TryRegisterSkill("red", 6, 140);
-            TryRegisterSkill("fuga", 6, 200);
-            TryRegisterSkill("purple", 8, 350);
+            TryRegisterSkill("blood", 8, 50);
+            TryRegisterSkill("projection", 9, 0, charAttack.EffectType.Speed);
+            TryRegisterSkill("ratio", 8, 60);
+            TryRegisterSkill("RCT", 9, 0, charAttack.EffectType.Heal);
+            TryRegisterSkill("curseControl", 8, 70);
+            TryRegisterSkill("bugArmour", 9, 0, charAttack.EffectType.Defence);
+            TryRegisterSkill("graniteBlast", 8, 90);
+            TryRegisterSkill("dismantle", 8, 100);
+            TryRegisterSkill("cleave", 8, 110);
+            TryRegisterSkill("beastAmber", 8, 125);
+            TryRegisterSkill("blue", 9, 130);
+            TryRegisterSkill("red", 9, 140);
+            TryRegisterSkill("fuga", 9, 200);
+            TryRegisterSkill("purple", 9, 350);
         }
 
-        private void TryRegisterSkill(string name, int frames, int damage,
-            charAttack.EffectType effect = charAttack.EffectType.None)
+        private void TryRegisterSkill(string name, int frames, int damage, charAttack.EffectType effect = charAttack.EffectType.None)
         {
             try
             {
-                playerAttack.AddAttack(name,
-                    LoadAttackFrames("charAttacks/Skills", name, frames),
-                    damage, 0.12f, effect);
+                playerAttack.AddAttack(name, LoadAttackFrames("Skills", name, frames), damage, 0.12f, effect);
             }
             catch (Microsoft.Xna.Framework.Content.ContentLoadException)
             {
