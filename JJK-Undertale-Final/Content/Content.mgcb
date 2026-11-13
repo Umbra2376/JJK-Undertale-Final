@@ -1368,7 +1368,7 @@
 /processorParam:Version=3.8.5.1
 /build:Skills/blood8.png
 
-#begin Skills/blue1.png
+#begin Skills/blue1.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1379,9 +1379,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue1.png
+/build:Skills/blue1.psd
 
-#begin Skills/blue2.png
+#begin Skills/blue2.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1392,9 +1392,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue2.png
+/build:Skills/blue2.psd
 
-#begin Skills/blue3.png
+#begin Skills/blue3.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1405,9 +1405,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue3.png
+/build:Skills/blue3.psd
 
-#begin Skills/blue4.png
+#begin Skills/blue4.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1418,9 +1418,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue4.png
+/build:Skills/blue4.psd
 
-#begin Skills/blue5.png
+#begin Skills/blue5.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1431,9 +1431,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue5.png
+/build:Skills/blue5.psd
 
-#begin Skills/blue6.png
+#begin Skills/blue6.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1444,9 +1444,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue6.png
+/build:Skills/blue6.psd
 
-#begin Skills/blue7.png
+#begin Skills/blue7.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1457,9 +1457,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue7.png
+/build:Skills/blue7.psd
 
-#begin Skills/blue8.png
+#begin Skills/blue8.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1470,9 +1470,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue8.png
+/build:Skills/blue8.psd
 
-#begin Skills/blue9.png
+#begin Skills/blue9.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -1483,7 +1483,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/blue9.png
+/build:Skills/blue9.psd
 
 #begin Skills/bugArmour1.png
 /importer:TextureImporter
@@ -2837,7 +2837,7 @@
 /processorParam:Version=3.8.5.1
 /build:Skills/RCT9.png
 
-#begin Skills/red1.png
+#begin Skills/red1.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2848,9 +2848,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red1.png
+/build:Skills/red1.psd
 
-#begin Skills/red2.png
+#begin Skills/red2.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2861,9 +2861,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red2.png
+/build:Skills/red2.psd
 
-#begin Skills/red3.png
+#begin Skills/red3.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2874,9 +2874,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red3.png
+/build:Skills/red3.psd
 
-#begin Skills/red4.png
+#begin Skills/red4.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2887,9 +2887,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red4.png
+/build:Skills/red4.psd
 
-#begin Skills/red5.png
+#begin Skills/red5.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2900,9 +2900,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red5.png
+/build:Skills/red5.psd
 
-#begin Skills/red6.png
+#begin Skills/red6.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2913,9 +2913,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red6.png
+/build:Skills/red6.psd
 
-#begin Skills/red7.png
+#begin Skills/red7.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2926,9 +2926,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red7.png
+/build:Skills/red7.psd
 
-#begin Skills/red8.png
+#begin Skills/red8.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2939,9 +2939,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red8.png
+/build:Skills/red8.psd
 
-#begin Skills/red9.png
+#begin Skills/red9.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2952,7 +2952,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Skills/red9.png
+/build:Skills/red9.psd
 
 #begin Skills/strawDoll1.png
 /importer:TextureImporter

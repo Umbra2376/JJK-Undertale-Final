@@ -696,6 +696,11 @@ namespace JJK_Undertale_Final
                         case charAttack.EffectType.Defence:
                             defenceBoostTime = 15f;
                             break;
+
+                        case charAttack.EffectType.Miracle:
+                            if (charHealth < 0)
+                                charHealth = 1;
+                            break;
                     }
 
                     if (enemyHealth <= 0)
@@ -2223,24 +2228,24 @@ namespace JJK_Undertale_Final
         }
         private void RegisterSkills()
         {
-            TryRegisterSkill("explodingFlesh", 7, 30);
-            TryRegisterSkill("strawDoll", 6, 35);
-            TryRegisterSkill("miracle", 6, 0, charAttack.EffectType.Defence);
-            TryRegisterSkill("ice", 6, 45);
-            TryRegisterSkill("blood", 8, 50);
+            TryRegisterSkill("explodingFlesh", 7, 60);
+            TryRegisterSkill("strawDoll", 6, 65);
+            TryRegisterSkill("miracle", 6, 0, charAttack.EffectType.Miracle);
+            TryRegisterSkill("ice", 6, 70);
+            TryRegisterSkill("blood", 8, 75);
             TryRegisterSkill("projection", 9, 0, charAttack.EffectType.Speed);
-            TryRegisterSkill("ratio", 8, 60);
+            TryRegisterSkill("ratio", 8, 80);
             TryRegisterSkill("RCT", 9, 0, charAttack.EffectType.Heal);
-            TryRegisterSkill("curseControl", 8, 70);
+            TryRegisterSkill("curseControl", 8, 90);
             TryRegisterSkill("bugArmour", 9, 0, charAttack.EffectType.Defence);
-            TryRegisterSkill("graniteBlast", 8, 90);
+            TryRegisterSkill("graniteBlast", 8, 95);
             TryRegisterSkill("dismantle", 8, 100);
             TryRegisterSkill("cleave", 8, 110);
             TryRegisterSkill("beastAmber", 8, 125);
             TryRegisterSkill("blue", 9, 130);
             TryRegisterSkill("red", 9, 140);
-            TryRegisterSkill("fuga", 9, 200);
-            TryRegisterSkill("purple", 9, 350);
+            TryRegisterSkill("fuga", 9, 300);
+            TryRegisterSkill("purple", 9, 300);
         }
         private void TryRegisterSkill(string name, int frames, int damage, charAttack.EffectType effect = charAttack.EffectType.None)
         {

@@ -20,7 +20,8 @@ namespace JJK_Undertale_Final
             None,
             Heal,
             Speed,
-            Defence
+            Defence,
+            Miracle
         }
 
         private class AttackData
