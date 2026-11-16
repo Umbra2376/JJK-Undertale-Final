@@ -693,8 +693,14 @@ namespace JJK_Undertale_Final
                         {
                             stage3Unlock = true;
                             charHealthMax = 200;
+                            charCEMax = 150;
                         }
-
+                        else if (battle == Battle.b3)
+                        {
+                            stage4Unlock = true;
+                            charHealthMax = 250;
+                            charCEMax = 200;
+                        }
                         rewardsGenerated = false;
                         rewardsAccepted = false;
                         choosingBattleSkill = false;
