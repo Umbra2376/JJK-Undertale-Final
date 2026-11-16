@@ -1,4 +1,3 @@
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -30,13 +29,15 @@ namespace JJK_Undertale_Final
             public int Damage;
             public float FrameDuration;
             public EffectType Effect;
+            public int CursedEnergyCost;
 
-            public AttackData(List<Texture2D> frames, int damage, float frameDuration, EffectType effect)
+            public AttackData(List<Texture2D> frames, int damage, float frameDuration, EffectType effect, int cursedEnergyCost)
             {
                 Frames = frames;
                 Damage = damage;
                 FrameDuration = frameDuration;
                 Effect = effect;
+                CursedEnergyCost = cursedEnergyCost;
             }
         }
 
@@ -63,18 +64,24 @@ namespace JJK_Undertale_Final
             Reset();
         }
 
-        public void AddAttack(string name, List<Texture2D> frames, int damage, float frameDuration = 0.12f, EffectType effect = EffectType.None)
+        public void AddAttack(string name, List<Texture2D> frames, int damage, float frameDuration = 0.12f, EffectType effect = EffectType.None, int cursedEnergyCost = 0)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Invalid attack name.");
-
             if (frames == null || frames.Count == 0)
                 throw new ArgumentException("An attack needs at least one frame.");
-
             if (frameDuration <= 0f)
                 throw new ArgumentException("Frame duration must be positive.");
+            if (cursedEnergyCost < 0)
+                throw new ArgumentException("Cursed energy cost cannot be negative.");
 
-            attacks[name] = new AttackData(frames, damage, frameDuration, effect);
+            attacks[name] = new AttackData(frames, damage, frameDuration, effect, cursedEnergyCost);
+        }
+        public int GetCursedEnergyCost(string name)
+        {
+            if (attacks.TryGetValue(name, out AttackData data))
+                return data.CursedEnergyCost;
+            return int.MaxValue;
         }
 
         public bool StartPunch()
@@ -98,9 +105,21 @@ namespace JJK_Undertale_Final
             return StartAttack(weaponName, AttackType.Weapon);
         }
 
-        public bool StartSkill(string skillName)
+        public bool StartSkill(string skillName, ref int cursedEnergy)
         {
-            return StartAttack(skillName, AttackType.Skill);
+            if (IsAttacking)
+                return false;
+            if (!attacks.TryGetValue(skillName, out AttackData data))
+                return false;
+            if (cursedEnergy < data.CursedEnergyCost)
+                return false;
+            if (StartAttack(skillName, AttackType.Skill))
+            {
+                cursedEnergy -= data.CursedEnergyCost;
+                return true;
+            }
+
+            return false;
         }
 
         private bool StartAttack(string name, AttackType type)
