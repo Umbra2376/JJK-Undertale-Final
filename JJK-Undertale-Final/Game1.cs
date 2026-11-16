@@ -63,8 +63,13 @@ namespace JJK_Undertale_Final
 
         int battleSkillIndex = 0;
         bool choosingBattleSkill = false;
-        float speedBoostTime = 0f;
-        float defenceBoostTime = 0f;
+        int charCE = 100;
+        int charCEMax = 100;
+        int speedBoostTurns = 0;
+        int defenceBoostTurns = 0;
+        int miracleTurns = 0;
+        const int skillEffectDuration = 3;
+        const int cursedEnergyRegen = 10;
 
         float b3AttackTimer = 0f;
         float b3AttackInterval = 2.5f;
@@ -121,6 +126,7 @@ namespace JJK_Undertale_Final
             dodgeBoxR = new Rectangle(400, 400, 700, 300);
             charHR = new Rectangle(370, 775, 450, 150);
             charHBarR = new Rectangle(400, 805, 400, 90);
+            charCEBarR = new Rectangle(1050, 805, 400, 40);
             healthBox = new Rectangle(-40, 750, 1675, 250);
             battleMenu = new Rectangle(-60, 400, 1625, 650);
             enemyHR = new Rectangle(525, -15, 450, 150);
@@ -312,15 +318,14 @@ namespace JJK_Undertale_Final
                     charHealth = charHealthMax;
                     enemyHealth = enemyHealthMax;
                     playerAttack.Reset();
+                    ResetBattleEffects();
                 }
             }
 
             else if (screen == Screen.Battle)
             {
                 float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                speedBoostTime = Math.Max(0f, speedBoostTime - dt);
-                defenceBoostTime = Math.Max(0f, defenceBoostTime - dt);
-                float currentSpeed = speedBoostTime > 0f ? soulSpeed * 1.5f : soulSpeed;
+                float currentSpeed = speedBoostTurns > 0 ? soulSpeed * 1.5f : soulSpeed;
 
                 float battleTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
                 particleEngine.Update();
@@ -367,11 +372,7 @@ namespace JJK_Undertale_Final
                         Rectangle projectileR = new Rectangle((int)projectile.Position.X - 12, (int)projectile.Position.Y - 12, 24, 24);
                         if (projectileR.Intersects(soulSpriteR) && invincibilityTime <= 0f)
                         {
-                            int incomingDamage = 5;
-                            if (defenceBoostTime > 0f)
-                                incomingDamage = (int)Math.Ceiling(incomingDamage * 0.5f);
-                            charHealth -= incomingDamage;
-                            invincibilityTime = 1f;
+                            TakeDamage(5);
                             b1Projectiles.RemoveAt(i);
                             particleEngine.Enabled = true;
                             particleEngine.EmitterLocation = new Vector2(soulSpriteR.Center.X, soulSpriteR.Center.Y);
@@ -433,12 +434,7 @@ namespace JJK_Undertale_Final
 
                         if (projectile.Hitbox.Intersects(b2SoulHitbox) && invincibilityTime <= 0f)
                         {
-                            int incomingDamage = 10;
-                            if (defenceBoostTime > 0f)
-                                incomingDamage = (int)Math.Ceiling(incomingDamage * 0.5f);
-                            charHealth -= incomingDamage;
-                            invincibilityTime = 1f;
-
+                            TakeDamage(10);
                             b2Projectiles.RemoveAt(i);
                             continue;
                         }
@@ -512,27 +508,16 @@ namespace JJK_Undertale_Final
                         {
                             if (projectile.IsPoisonZone)
                             {
-                                if (b3PoisonDamageTimer <= 0f)
+                                if (b3PoisonDamageTimer <= 0f && invincibilityTime <= 0f)
                                 {
-                                    int damage = 3;
-
-                                    if (defenceBoostTime > 0f)
-                                        damage = (int)Math.Ceiling(damage * 0.5f);
-
-                                    charHealth -= damage;
+                                    TakeDamage(3);
                                     b3PoisonDamageTimer = 0.75f;
                                 }
                             }
                             else if (invincibilityTime <= 0f)
                             {
-                                int damage =
-                                    projectile._type == b3Projectile.ProjectileType.WingKing ? 10 : 5;
-
-                                if (defenceBoostTime > 0f)
-                                    damage = (int)Math.Ceiling(damage * 0.5f);
-                                charHealth -= damage;
-                                invincibilityTime = 1f;
-
+                                int damage = projectile._type == b3Projectile.ProjectileType.WingKing ? 10 : 5;
+                                TakeDamage(damage);
                                 if (projectile._type == b3Projectile.ProjectileType.WingKing)
                                 {
                                     b3Projectiles.RemoveAt(i);
@@ -552,6 +537,7 @@ namespace JJK_Undertale_Final
                     }
                     else if (dodgeTime <= 0f)
                     {
+                        EndTurn();
                         dodgePhase = false;
                         b3Projectiles.Clear();
                         screen = Screen.Select;
@@ -590,8 +576,7 @@ namespace JJK_Undertale_Final
                     stage9Unlock = false;
                     stage10Unlock = false;
 
-                    speedBoostTime = 0f;
-                    defenceBoostTime = 0f;
+                    ResetBattleEffects();
                     playerAttack.Reset();
 
                     b1Projectiles.Clear();
@@ -672,7 +657,7 @@ namespace JJK_Undertale_Final
                             if (confirmPressed)
                             {
                                 string skill = equippedSkills[battleSkillIndex];
-                                if (playerAttack.StartSkill(skill))
+                                if (playerAttack.StartSkill(skill, ref charCE))
                                     choosingBattleSkill = false;
                             }
                         }
@@ -682,27 +667,21 @@ namespace JJK_Undertale_Final
                 {
                     enemyHealth -= playerAttack.Damage;
                     enemyHealth = Math.Max(0, enemyHealth);
-
                     switch (playerAttack.CurrentEffect)
                     {
                         case charAttack.EffectType.Heal:
                             charHealth = Math.Min(charHealthMax, charHealth + 30);
                             break;
-
                         case charAttack.EffectType.Speed:
-                            speedBoostTime = 15f;
+                            speedBoostTurns = skillEffectDuration;
                             break;
-
                         case charAttack.EffectType.Defence:
-                            defenceBoostTime = 15f;
+                            defenceBoostTurns = skillEffectDuration;
                             break;
-
                         case charAttack.EffectType.Miracle:
-                            if (charHealth < 0)
-                                charHealth = 1;
+                            miracleTurns = skillEffectDuration;
                             break;
                     }
-
                     if (enemyHealth <= 0)
                     {
                         if (battle == Battle.b1)
@@ -715,17 +694,22 @@ namespace JJK_Undertale_Final
                             stage3Unlock = true;
                             charHealthMax = 200;
                         }
+
                         rewardsGenerated = false;
                         rewardsAccepted = false;
+                        choosingBattleSkill = false;
+
                         screen = Screen.BattleRewards;
                     }
                     else
                     {
                         choosingBattleSkill = false;
                         screen = Screen.Battle;
+
                         dodgePhase = true;
                         dodgeTime = 15f;
                         projectileTime = 0f;
+                        titleTime = 0f;
 
                         b1Projectiles.Clear();
                         b2Projectiles.Clear();
@@ -733,12 +717,14 @@ namespace JJK_Undertale_Final
 
                         b2AttackTime = 0f;
                         b2AttackAngle = 0f;
+
                         b3AttackTimer = 0f;
                         b3PoisonDamageTimer = 0f;
                         b3WingKingNext = true;
                     }
-                }
 
+                    playerAttack.Reset();
+                }
             }
             else if (screen == Screen.BattleRewards)
             {
@@ -797,8 +783,7 @@ namespace JJK_Undertale_Final
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
                         choosingBattleSkill = false;
-                        speedBoostTime = 0f;
-                        defenceBoostTime = 0f;
+                        ResetBattleEffects();
                     }
                     if (stage2Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
@@ -819,8 +804,7 @@ namespace JJK_Undertale_Final
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
                         choosingBattleSkill = false;
-                        speedBoostTime = 0f;
-                        defenceBoostTime = 0f;
+                        ResetBattleEffects();
                     }
 
                     if (stage3Selecting && stage3Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
@@ -843,8 +827,7 @@ namespace JJK_Undertale_Final
                         charHealth = charHealthMax;
                         playerAttack.Reset();
                         choosingBattleSkill = false;
-                        speedBoostTime = 0f;
-                        defenceBoostTime = 0f;
+                        ResetBattleEffects();
                     }
 
                 }
@@ -950,7 +933,7 @@ namespace JJK_Undertale_Final
                     }
                 }
             }
-                base.Update(gameTime);
+            base.Update(gameTime);
         }
         protected override void Draw(GameTime gameTime)
         {
@@ -1036,7 +1019,7 @@ namespace JJK_Undertale_Final
                     if (enemyBarWidth > 0)
                         _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
                     _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
-                    _spriteBatch.DrawString(titleFont,"HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.DrawString(titleFont, "HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
                     foreach (b3Projectile projectile in b3Projectiles)
                         projectile.Draw(_spriteBatch);
@@ -1046,7 +1029,7 @@ namespace JJK_Undertale_Final
                     _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
                     int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
                     if (playerBarWidth > 0)
-                        _spriteBatch.Draw(barTexture, new Rectangle( charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
                 }
@@ -1244,6 +1227,11 @@ namespace JJK_Undertale_Final
             {
                 _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
                 _spriteBatch.DrawString(titleFont, "Press START to restart", skipOption, Color.White);
+            }
+            if (screen == Screen.Battle || screen == Screen.Select)
+            {
+                DrawCursedEnergy();
+                DrawActiveEffects();
             }
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -2192,17 +2180,27 @@ namespace JJK_Undertale_Final
         {
             if (!choosingBattleSkill || equippedSkills.Count == 0)
                 return;
-
             _spriteBatch.Draw(barTexture, new Rectangle(420, 410, 650, 225), Color.Black * 0.9f);
             _spriteBatch.DrawString(stagesFont, "CHOOSE SKILL", new Vector2(490, 425), Color.White);
 
             for (int i = 0; i < equippedSkills.Count; i++)
             {
-                Color color = i == battleSkillIndex ? Color.Yellow : Color.White;
+                string skill = equippedSkills[i];
+                int cost = playerAttack.GetCursedEnergyCost(skill);
+
+                bool available = cost != int.MaxValue;
+                bool canAfford = available && charCE >= cost;
+                Color color = Color.White;
+                if (!canAfford)
+                    color = Color.Gray;
+                else if (i == battleSkillIndex)
+                    color = Color.Yellow;
+
                 string prefix = i == battleSkillIndex ? "> " : "  ";
-                _spriteBatch.DrawString(stagesFont, prefix + GetSkillName(equippedSkills[i]), new Vector2(490, 465 + i * 43), color);
+                string costText = available ? " [" + cost + " CE]" : " [Unavailable]";
+                _spriteBatch.DrawString(stagesFont, prefix + GetSkillName(skill) + costText, new Vector2(450, 465 + i * 43), color);
             }
-            _spriteBatch.DrawString(stagesFont, "A: Use   B: Cancel", new Vector2(780, 590), Color.White);
+            _spriteBatch.DrawString(stagesFont, "B: Use   A: Cancel", new Vector2(780, 590), Color.White);
         }
         private List<Texture2D> LoadAttackFrames(string folder, string prefix, int frameCount)
         {
@@ -2228,35 +2226,108 @@ namespace JJK_Undertale_Final
         }
         private void RegisterSkills()
         {
-            TryRegisterSkill("explodingFlesh", 7, 60);
-            TryRegisterSkill("strawDoll", 6, 65);
-            TryRegisterSkill("miracle", 6, 0, charAttack.EffectType.Miracle);
-            TryRegisterSkill("ice", 6, 70);
-            TryRegisterSkill("blood", 8, 75);
-            TryRegisterSkill("projection", 9, 0, charAttack.EffectType.Speed);
-            TryRegisterSkill("ratio", 8, 80);
-            TryRegisterSkill("RCT", 9, 0, charAttack.EffectType.Heal);
-            TryRegisterSkill("curseControl", 8, 90);
-            TryRegisterSkill("bugArmour", 9, 0, charAttack.EffectType.Defence);
-            TryRegisterSkill("graniteBlast", 8, 95);
-            TryRegisterSkill("dismantle", 8, 100);
-            TryRegisterSkill("cleave", 8, 110);
-            TryRegisterSkill("beastAmber", 8, 125);
-            TryRegisterSkill("blue", 9, 130);
-            TryRegisterSkill("red", 9, 140);
-            TryRegisterSkill("fuga", 9, 300);
-            TryRegisterSkill("purple", 9, 300);
+            TryRegisterSkill("explodingFlesh", 7, 60, 15);
+            TryRegisterSkill("strawDoll", 6, 65, 20);
+
+            TryRegisterSkill("miracle", 6, 0, 30, charAttack.EffectType.Miracle);
+
+            TryRegisterSkill("ice", 6, 70, 20);
+            TryRegisterSkill("blood", 8, 75, 25);
+
+            TryRegisterSkill("projection", 9, 0, 20,
+                charAttack.EffectType.Speed);
+
+            TryRegisterSkill("ratio", 8, 80, 25);
+
+            TryRegisterSkill("RCT", 9, 0, 30,
+                charAttack.EffectType.Heal);
+
+            TryRegisterSkill("curseControl", 8, 90, 30);
+
+            TryRegisterSkill("bugArmour", 9, 0, 25,
+                charAttack.EffectType.Defence);
+
+            TryRegisterSkill("graniteBlast", 8, 95, 30);
+            TryRegisterSkill("dismantle", 8, 100, 35);
+            TryRegisterSkill("cleave", 8, 110, 40);
+            TryRegisterSkill("beastAmber", 8, 125, 45);
+            TryRegisterSkill("blue", 9, 130, 45);
+            TryRegisterSkill("red", 9, 140, 50);
+            TryRegisterSkill("fuga", 9, 300, 80);
+            TryRegisterSkill("purple", 9, 300, 90);
         }
-        private void TryRegisterSkill(string name, int frames, int damage, charAttack.EffectType effect = charAttack.EffectType.None)
+        private void TryRegisterSkill(string name, int frames, int damage, int cursedEnergyCost, charAttack.EffectType effect = charAttack.EffectType.None)
         {
             try
             {
-                playerAttack.AddAttack(name, LoadAttackFrames("Skills", name, frames), damage, 0.12f, effect);
+                playerAttack.AddAttack(name, LoadAttackFrames("Skills", name, frames), damage, 0.12f, effect, cursedEnergyCost);
             }
             catch (Microsoft.Xna.Framework.Content.ContentLoadException)
             {
                 System.Diagnostics.Debug.WriteLine("Missing skill animation: " + name);
             }
+        }
+        private void EndTurn()
+        {
+            if (speedBoostTurns > 0)
+                speedBoostTurns--;
+            if (defenceBoostTurns > 0)
+                defenceBoostTurns--;
+            if (miracleTurns > 0)
+                miracleTurns--;
+            charCE = Math.Min(charCEMax, charCE + cursedEnergyRegen);
+        }
+        private void TakeDamage(int damage)
+        {
+            if (damage <= 0 || charHealth <= 0)
+                return;
+            if (defenceBoostTurns > 0)
+                damage = (int)Math.Ceiling(damage * 0.5f);
+            if (miracleTurns > 0 && charHealth - damage <= 0)
+            {
+                charHealth = 1;
+                miracleTurns = 0;
+                invincibilityTime = 2f;
+
+                return;
+            }
+            charHealth = Math.Max(0, charHealth - damage);
+            invincibilityTime = 1f;
+        }
+        private void ResetBattleEffects()
+        {
+            charCE = charCEMax;
+
+            speedBoostTurns = 0;
+            defenceBoostTurns = 0;
+            miracleTurns = 0;
+
+            invincibilityTime = 0f;
+        }
+        private void DrawCursedEnergy()
+        {
+            _spriteBatch.Draw(barTexture, charCEBarR, Color.DarkBlue);
+            int ceWidth = (int)(charCEBarR.Width * ((float)charCE / charCEMax));
+            if (ceWidth > 0)
+                _spriteBatch.Draw(barTexture, new Rectangle(charCEBarR.X, charCEBarR.Y, ceWidth, charCEBarR.Height), Color.CornflowerBlue);
+            _spriteBatch.Draw(charCEBarT, charCEBarR, Color.White);
+            _spriteBatch.DrawString(stagesFont, "CE: " + charCE + "/" + charCEMax, new Vector2(1050, 765), Color.White);
+        }
+        private void DrawActiveEffects()
+        {
+            int y = 100;
+            if (speedBoostTurns > 0)
+            {
+                _spriteBatch.DrawString(stagesFont, "Speed: " + speedBoostTurns + " turns", new Vector2(50, y), Color.Cyan);
+                y += 40;
+            }
+            if (defenceBoostTurns > 0)
+            {
+                _spriteBatch.DrawString(stagesFont, "Defence: " + defenceBoostTurns + " turns", new Vector2(50, y), Color.Orange);
+                y += 40;
+            }
+            if (miracleTurns > 0)
+                _spriteBatch.DrawString(stagesFont, "Miracle: " + miracleTurns + " turns", new Vector2(50, y), Color.Violet);
         }
     }
 }
