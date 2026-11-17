@@ -15,7 +15,6 @@ namespace JJK_Undertale_Final
         public Vector2 _position;
         public Vector2 _direction;
         public ProjectileType _type;
-
         private Texture2D _texture;
         private float _speed;
         private float _lifetime;
@@ -23,13 +22,11 @@ namespace JJK_Undertale_Final
 
         public bool IsPoisonZone { get; private set; }
         public bool IsFinished { get; private set; }
-
         public Rectangle Hitbox
         {
             get
             {
                 int size = IsPoisonZone ? 105 : _type == ProjectileType.WingKing ? 24 : 35;
-
                 return new Rectangle((int)_position.X - size / 2, (int)_position.Y - size / 2, size, size);
             }
         }
@@ -40,7 +37,6 @@ namespace JJK_Undertale_Final
             _direction = direction;
             _type = type;
             _texture = texture;
-
             _speed = type == ProjectileType.WingKing ? 320f : 115f;
             _lifetime = type == ProjectileType.WingKing ? 4f : 2.2f;
             _rotation = (float)Math.Atan2(direction.Y, direction.X);
@@ -87,8 +83,9 @@ namespace JJK_Undertale_Final
             else
             {
                 Color tint = _type == ProjectileType.WingKing ? Color.White : Color.LightGreen;
-
-                spriteBatch.Draw(_texture, Hitbox, null, tint, _rotation, Vector2.Zero, SpriteEffects.None, 0f);
+                Vector2 origin = new Vector2(_texture.Width / 2f, _texture.Height / 2f);
+                Rectangle destination = new Rectangle((int)_position.X, (int)_position.Y, Hitbox.Width, Hitbox.Height);
+                spriteBatch.Draw(_texture, destination, null, tint, _rotation, origin, SpriteEffects.None, 0f);
             }
         }
     }

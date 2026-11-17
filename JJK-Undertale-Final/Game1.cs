@@ -37,6 +37,7 @@ namespace JJK_Undertale_Final
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
         Screen screen = Screen.Title;
+        Screen previousScreen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
@@ -87,7 +88,7 @@ namespace JJK_Undertale_Final
 
         float soulSpeed = 300f;
         float dodgeTime = 1f;
-        int charHealth = 100, charHealthMax = 100;
+        int charHealth = 50, charHealthMax = 50;
         bool dodgePhase = true;
         int enemyHealth = 100, enemyHealthMax = 100;
         Rectangle enemyHR;
@@ -150,9 +151,7 @@ namespace JJK_Undertale_Final
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
             _transformMatrix = Matrix.CreateScale(GraphicsDevice.Viewport.Width / (float)window.Width, GraphicsDevice.Viewport.Height / (float)window.Height, 1f);
-
             particles.Add(Content.Load<Texture2D>("tile"));
 
             titleImg = Content.Load<Texture2D>("titleScreen");
@@ -257,16 +256,22 @@ namespace JJK_Undertale_Final
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Triggers.Left > 0)
-                screen = Screen.Quit;
-            if (screen == Screen.Quit && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
-                Exit();
-            else if (screen == Screen.Quit && gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
-                screen = Screen.Menu;
-
-            // TODO: Add your update logic here
             gamePadOld = gamePadCurrent;
             gamePadCurrent = GamePad.GetState(PlayerIndex.One);
+            if (screen != Screen.Quit && gamePadCurrent.Triggers.Left > 0.5f && gamePadOld.Triggers.Left <= 0.5f)
+            {
+                previousScreen = screen;
+                screen = Screen.Quit;
+                return;
+            }
+            if (screen == Screen.Quit)
+            {
+                if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    Exit();
+                else if (gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
+                    screen = previousScreen;
+                return;
+            }
             if (screen == Screen.Title)
             {
                 titleTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -321,7 +326,6 @@ namespace JJK_Undertale_Final
                     ResetBattleEffects();
                 }
             }
-
             else if (screen == Screen.Battle)
             {
                 float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -398,6 +402,7 @@ namespace JJK_Undertale_Final
                         screen = Screen.Lose;
                     else if (dodgeTime <= 0f)
                     {
+                        EndTurn();
                         dodgePhase = false;
                         b1Projectiles.Clear();
                         screen = Screen.Select;
@@ -430,7 +435,7 @@ namespace JJK_Undertale_Final
                         b2Projectile projectile = b2Projectiles[i];
                         projectile.Update(gameTime);
 
-                        Rectangle b2SoulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 4, 12, 20);
+                        Rectangle b2SoulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y - 2, 12, 18);
 
                         if (projectile.Hitbox.Intersects(b2SoulHitbox) && invincibilityTime <= 0f)
                         {
@@ -451,6 +456,7 @@ namespace JJK_Undertale_Final
                         screen = Screen.Lose;
                     else if (dodgeTime <= 0f)
                     {
+                        EndTurn();
                         dodgePhase = false;
                         b2Projectiles.Clear();
                         screen = Screen.Select;
@@ -487,15 +493,11 @@ namespace JJK_Undertale_Final
 
                     b3PoisonDamageTimer -= dt;
 
-                    Rectangle soulHitbox = new Rectangle(
-                        soulSpriteR.X + 4,
-                        soulSpriteR.Y + 4,
-                        12, 12);
+                    Rectangle soulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y - 2, 12, 18);
 
                     for (int i = b3Projectiles.Count - 1; i >= 0; i--)
                     {
                         b3Projectile projectile = b3Projectiles[i];
-
                         projectile.Update(gameTime);
 
                         if (projectile.IsFinished)
@@ -510,14 +512,13 @@ namespace JJK_Undertale_Final
                             {
                                 if (b3PoisonDamageTimer <= 0f && invincibilityTime <= 0f)
                                 {
-                                    TakeDamage(3);
+                                    TakeDamage(5);
                                     b3PoisonDamageTimer = 0.75f;
                                 }
                             }
                             else if (invincibilityTime <= 0f)
                             {
-                                int damage = projectile._type == b3Projectile.ProjectileType.WingKing ? 10 : 5;
-                                TakeDamage(damage);
+                                TakeDamage(15);
                                 if (projectile._type == b3Projectile.ProjectileType.WingKing)
                                 {
                                     b3Projectiles.RemoveAt(i);
@@ -550,9 +551,11 @@ namespace JJK_Undertale_Final
                 if (gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
                 {
                     screen = Screen.Title;
-                    charHealthMax = 100;
+                    charHealthMax = 50;
+                    charCE = 100;
                     enemyHealthMax = 100;
                     charHealth = charHealthMax;
+                    charCE = charCEMax;
                     enemyHealth = enemyHealthMax;
 
                     skillList.Clear();
@@ -587,7 +590,6 @@ namespace JJK_Undertale_Final
                     rewardsAccepted = false;
                 }
             }
-
             else if (screen == Screen.Select)
             {
                 float stickX = gamePadCurrent.ThumbSticks.Left.X;
@@ -621,8 +623,7 @@ namespace JJK_Undertale_Final
                 }
 
                 bool confirmPressed = gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released;
-                if (choosingBattleSkill && gamePadCurrent.Buttons.A == ButtonState.Pressed &&
-                    gamePadOld.Buttons.A == ButtonState.Released)
+                if (choosingBattleSkill && gamePadCurrent.Buttons.A == ButtonState.Pressed && gamePadOld.Buttons.A == ButtonState.Released)
                     choosingBattleSkill = false;
 
                 if (!playerAttack.IsAttacking)
@@ -670,7 +671,7 @@ namespace JJK_Undertale_Final
                     switch (playerAttack.CurrentEffect)
                     {
                         case charAttack.EffectType.Heal:
-                            charHealth = Math.Min(charHealthMax, charHealth + 30);
+                            charHealth = Math.Min(charHealthMax, charHealth + 100);
                             break;
                         case charAttack.EffectType.Speed:
                             speedBoostTurns = skillEffectDuration;
@@ -684,22 +685,63 @@ namespace JJK_Undertale_Final
                     }
                     if (enemyHealth <= 0)
                     {
-                        if (battle == Battle.b1)
+                        if (battle == Battle.b1 && !stage2Unlock)
                         {
                             stage2Unlock = true;
-                            charHealthMax = 150;
+                            charHealthMax = 100;
                         }
-                        else if (battle == Battle.b2)
+                        else if (battle == Battle.b2 && !stage3Unlock)
                         {
                             stage3Unlock = true;
-                            charHealthMax = 200;
+                            charHealthMax = 150;
                             charCEMax = 150;
                         }
-                        else if (battle == Battle.b3)
+                        else if (battle == Battle.b3 && !stage4Unlock)
                         {
                             stage4Unlock = true;
-                            charHealthMax = 250;
+                            charHealthMax = 200;
                             charCEMax = 200;
+                        }
+                        else if (battle == Battle.b4 && !stage5Unlock)
+                        {
+                            stage5Unlock = true;
+                            charHealthMax = 250;
+                            charCEMax = 250;
+                        }
+                        else if (battle == Battle.b5 && !stage6Unlock)
+                        {
+                            stage6Unlock = true;
+                            charHealthMax = 300;
+                            charCEMax = 300;
+                        }
+                        else if (battle == Battle.b6 && !stage7Unlock)
+                        {
+                            stage7Unlock = true;
+                            charHealthMax = 350;
+                            charCEMax = 350;
+                        }
+                        else if (battle == Battle.b7 && !stage8Unlock)
+                        {
+                            stage8Unlock = true;
+                            charHealthMax = 400;
+                            charCEMax = 400;
+                        }
+                        else if (battle == Battle.b8 && !stage9Unlock)
+                        {
+                            stage9Unlock = true;
+                            charHealthMax = 450;
+                            charCEMax = 450;
+                        }
+                        else if (battle == Battle.b9 && !stage10Unlock)
+                        {
+                            stage10Unlock = true;
+                            charHealthMax = 500;
+                            charCEMax = 500;
+                        }
+                        else if (battle == Battle.b10)
+                        {
+                            charHealthMax = 550;
+                            charCEMax = 550;
                         }
                         rewardsGenerated = false;
                         rewardsAccepted = false;
@@ -784,8 +826,8 @@ namespace JJK_Undertale_Final
                         invincibilityTime = 0f;
 
                         b1Projectiles.Clear();
-                        enemyHealthMax = 100;
                         charHealth = charHealthMax;
+                        enemyHealthMax = 100;
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
                         choosingBattleSkill = false;
@@ -805,8 +847,8 @@ namespace JJK_Undertale_Final
                         invincibilityTime = 0f;
 
                         b2Projectiles.Clear();
-                        enemyHealthMax = 150;
                         charHealth = charHealthMax;
+                        enemyHealthMax = 200;
                         enemyHealth = enemyHealthMax;
                         playerAttack.Reset();
                         choosingBattleSkill = false;
@@ -828,7 +870,25 @@ namespace JJK_Undertale_Final
                         b3AttackTimer = 0f;
                         b3PoisonDamageTimer = 0f;
                         b3WingKingNext = true;
-                        enemyHealthMax = 250;
+                        enemyHealthMax = 300;
+                        enemyHealth = enemyHealthMax;
+                        charHealth = charHealthMax;
+                        playerAttack.Reset();
+                        choosingBattleSkill = false;
+                        ResetBattleEffects();
+                    }
+                    if (stage4Selecting && stage4Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    {
+                        showStagesMenu = false;
+                        stage3Selecting = false;
+                        stageSelecting = true;
+                        screen = Screen.Battle;
+                        battle = Battle.b4;
+                        dodgePhase = true;
+                        dodgeTime = 15f;
+                        invincibilityTime = 0f;
+
+                        enemyHealthMax = 400;
                         enemyHealth = enemyHealthMax;
                         charHealth = charHealthMax;
                         playerAttack.Reset();
@@ -956,7 +1016,7 @@ namespace JJK_Undertale_Final
             else if (screen == Screen.Quit)
             {
                 _spriteBatch.DrawString(titleFont, "You are trying to quit. Are you sure?", new Vector2(350, 100), Color.White);
-                _spriteBatch.DrawString(titleFont, "Press A to quit and B to go back to menu", new Vector2(285, 650), Color.White);
+                _spriteBatch.DrawString(titleFont, "Press A to quit and B to continue the game", new Vector2(235, 650), Color.White);
             }
             else if (screen == Screen.Opening)
             {
@@ -1181,7 +1241,7 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(menuOptions[7], new Rectangle(700, 725, 300, 130), Color.Yellow);
                     else
                         _spriteBatch.Draw(menuOptions[7], new Rectangle(700, 725, 300, 130), Color.White);
-                    _spriteBatch.DrawString(stagesFont, "Agito", new Vector2(800, 855), Color.White);
+                    _spriteBatch.DrawString(stagesFont, "Kurourushi", new Vector2(790, 855), Color.White);
                     if (stage6Selecting)
                         _spriteBatch.Draw(menuOptions[8], new Rectangle(1150, 25, 300, 130), Color.Yellow);
                     else
@@ -1262,7 +1322,7 @@ namespace JJK_Undertale_Final
                 _spriteBatch.DrawString(titleFont, "Movement = Joystick", controlsText, Color.White);
                 _spriteBatch.DrawString(titleFont, "Select = A", new Vector2(controlsText.X, controlsText.Y + 90), Color.White);
                 _spriteBatch.DrawString(titleFont, "Back = B", new Vector2(controlsText.X, controlsText.Y + 180), Color.White);
-                _spriteBatch.DrawString(titleFont, "Exit = Z (on the back)", new Vector2(controlsText.X, controlsText.Y + 270), Color.White);
+                _spriteBatch.DrawString(titleFont, "Exit or Pause = Z (on the back)", new Vector2(controlsText.X, controlsText.Y + 270), Color.White);
                 _spriteBatch.DrawString(titleFont, "Press START to start", startOption, Color.White);
             }
         }
@@ -2215,7 +2275,6 @@ namespace JJK_Undertale_Final
             for (int i = 1; i <= frameCount; i++)
             {
                 string path = folder + "/" + prefix + i;
-
                 try
                 {
                     frames.Add(Content.Load<Texture2D>(path));
@@ -2227,40 +2286,28 @@ namespace JJK_Undertale_Final
                     throw;
                 }
             }
-
             return frames;
         }
         private void RegisterSkills()
         {
-            TryRegisterSkill("explodingFlesh", 7, 60, 15);
-            TryRegisterSkill("strawDoll", 6, 65, 20);
-
-            TryRegisterSkill("miracle", 6, 0, 30, charAttack.EffectType.Miracle);
-
-            TryRegisterSkill("ice", 6, 70, 20);
-            TryRegisterSkill("blood", 8, 75, 25);
-
-            TryRegisterSkill("projection", 9, 0, 20,
-                charAttack.EffectType.Speed);
-
-            TryRegisterSkill("ratio", 8, 80, 25);
-
-            TryRegisterSkill("RCT", 9, 0, 30,
-                charAttack.EffectType.Heal);
-
-            TryRegisterSkill("curseControl", 8, 90, 30);
-
-            TryRegisterSkill("bugArmour", 9, 0, 25,
-                charAttack.EffectType.Defence);
-
-            TryRegisterSkill("graniteBlast", 8, 95, 30);
-            TryRegisterSkill("dismantle", 8, 100, 35);
-            TryRegisterSkill("cleave", 8, 110, 40);
-            TryRegisterSkill("beastAmber", 8, 125, 45);
-            TryRegisterSkill("blue", 9, 130, 45);
-            TryRegisterSkill("red", 9, 140, 50);
-            TryRegisterSkill("fuga", 9, 300, 80);
-            TryRegisterSkill("purple", 9, 300, 90);
+            TryRegisterSkill("explodingFlesh", 7, 60, 45);
+            TryRegisterSkill("strawDoll", 6, 65, 50);
+            TryRegisterSkill("miracle", 6, 0, 55, charAttack.EffectType.Miracle);
+            TryRegisterSkill("ice", 6, 70, 70);
+            TryRegisterSkill("blood", 8, 75, 75);
+            TryRegisterSkill("projection", 9, 0, 60, charAttack.EffectType.Speed);
+            TryRegisterSkill("ratio", 8, 80, 80);
+            TryRegisterSkill("RCT", 9, 0, 90, charAttack.EffectType.Heal);
+            TryRegisterSkill("curseControl", 8, 90, 85);
+            TryRegisterSkill("bugArmour", 9, 0, 75, charAttack.EffectType.Defence);
+            TryRegisterSkill("graniteBlast", 8, 95, 90);
+            TryRegisterSkill("dismantle", 8, 100, 110);
+            TryRegisterSkill("cleave", 8, 110, 115);
+            TryRegisterSkill("beastAmber", 8, 125, 105);
+            TryRegisterSkill("blue", 9, 130, 120);
+            TryRegisterSkill("red", 9, 140, 130);
+            TryRegisterSkill("fuga", 9, 300, 250);
+            TryRegisterSkill("purple", 9, 400, 300);
         }
         private void TryRegisterSkill(string name, int frames, int damage, int cursedEnergyCost, charAttack.EffectType effect = charAttack.EffectType.None)
         {
