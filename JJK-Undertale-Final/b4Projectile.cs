@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -26,8 +26,8 @@ namespace JJK_Undertale_Final
         private float _rotation;
         private float _beamLength;
 
-        private float _piercingChargeTime = 0.65f;
-        private float _piercingFireTime = 0.16f;
+        private float _piercingChargeTime = 0.85f;
+        private float _piercingFireTime = 0.3f;
         private float _superNovaChargeTime = 0.36f;
         private float _superNovaFrameTime = 0.08f;
 
@@ -74,7 +74,7 @@ namespace JJK_Undertale_Final
 
             if (_type == ProjectileType.PiercingBlood)
             {
-                if (_timer >= _piercingChargeTime)
+                if (_timer >= _piercingChargeTime + _piercingFireTime)
                     _isFinished = true;
             }
             else if (_type == ProjectileType.Supernova)
@@ -97,7 +97,8 @@ namespace JJK_Undertale_Final
                 {
                     if (_timer < _piercingChargeTime)
                         return Rectangle.Empty;
-                    int _thickness = 14;
+                    float progress = MathHelper.Clamp((_timer - _piercingChargeTime) / _piercingFireTime, 0f, 1f);
+                    int _thickness = (int)MathHelper.Lerp(30f, 14f, progress);
 
                     if (_direction.X != 0)
                         return new Rectangle(_dodgeBox.Left, (int)_position.Y - _thickness / 2, _dodgeBox.Width, _thickness);
@@ -124,7 +125,7 @@ namespace JJK_Undertale_Final
             float dx = _position.X - closestX;
             float dy = _position.Y - closestY;
 
-            return dx * dx * dy * dy <= _radius * _radius;
+            return dx * dx + dy * dy <= _radius * _radius;
         }
         public void Draw(SpriteBatch spriteBatch)
         {
@@ -139,21 +140,20 @@ namespace JJK_Undertale_Final
         {
             Vector2 handPosition = _position - _direction * 40f;
             spriteBatch.Draw(_handsTexture, handPosition, null, Color.White, _rotation, new Vector2(_handsTexture.Width / 2f, _handsTexture.Height / 2f), new Vector2(70f / _handsTexture.Width, 70f / _handsTexture.Height), SpriteEffects.None, 0f);
-            
+
             if (_timer < _piercingChargeTime)
             {
-                float _progress = _timer / _piercingChargeTime;
-                float _size = MathHelper.Lerp(8f, 36f, _progress);
-
-                spriteBatch.Draw(_chargeTexture, _position, null, Color.White, 0f, new Vector2(_chargeTexture.Width / 2f, _chargeTexture.Height / 2), new Vector2(_size / _chargeTexture.Width, _size / _chargeTexture.Height), SpriteEffects.None, 0f);
+                float progress = MathHelper.Clamp(_timer / _piercingChargeTime, 0f, 1f);
+                float chargeSize = MathHelper.Lerp(15f, 45f, progress);
+                spriteBatch.Draw(_chargeTexture, _position, null, Color.White, 0f, new Vector2(_chargeTexture.Width / 2f, _chargeTexture.Height / 2f), new Vector2(chargeSize / _chargeTexture.Width, chargeSize / _chargeTexture.Height), SpriteEffects.None, 0f);
             }
+
             else
             {
-                float _progress = (_timer - _piercingChargeTime) / _piercingFireTime;
-                float _thickness = MathHelper.Lerp(20f, 8f, _progress);
-                float _opacity = MathHelper.Lerp(1f, 0.4f, _progress);
-
-                spriteBatch.Draw(_beamTexture, _position, null, Color.White * _opacity, _rotation, new Vector2(0f, _beamTexture.Height / 2), new Vector2(_beamLength / _beamTexture.Width ,_thickness / _beamTexture.Height), SpriteEffects.None, 0f);
+                float progress = MathHelper.Clamp((_timer - _piercingChargeTime) / _piercingFireTime, 0f, 1f);
+                float thickness = MathHelper.Lerp(30f, 14f, progress);
+                float opacity = MathHelper.Lerp(1f, 0.5f, progress);
+                spriteBatch.Draw(_beamTexture, _position, null, Color.White * opacity, _rotation, new Vector2(0f, _beamTexture.Height / 2f), new Vector2(_beamLength / _beamTexture.Width, thickness / _beamTexture.Height), SpriteEffects.None, 0f);
             }
         }
         private void DrawSupernova(SpriteBatch spriteBatch)
