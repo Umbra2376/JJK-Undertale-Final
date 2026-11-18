@@ -572,15 +572,17 @@ namespace JJK_Undertale_Final
 
                     soulSpriteR.X += (int)(movement.X * currentSpeed * dt);
                     soulSpriteR.Y += (int)(movement.Y * currentSpeed * dt);
+
                     soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
                     soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
-                    piercingBloodTimer += dt;
 
+                    piercingBloodTimer += dt;
                     if (piercingBloodTimer >= piercingBloodInterval)
                     {
                         SpawnB4Projectiles1();
                         piercingBloodTimer -= piercingBloodInterval;
                     }
+
                     supernovaTimer += dt;
                     if (supernovaTimer >= supernovaInterval)
                     {
@@ -591,10 +593,7 @@ namespace JJK_Undertale_Final
                     if (invincibilityTime > 0f)
                         invincibilityTime -= dt;
 
-                    b3PoisonDamageTimer -= dt;
-
-                    Rectangle soulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y - 2, 12, 18);
-
+                    Rectangle soulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 1, 12, 18);
                     for (int i = b4Projectiles.Count - 1; i >= 0; i--)
                     {
                         b4Projectile projectile = b4Projectiles[i];
@@ -605,26 +604,23 @@ namespace JJK_Undertale_Final
                             b4Projectiles.RemoveAt(i);
                             continue;
                         }
-
                         if (projectile.Collides(soulHitbox) && invincibilityTime <= 0f)
-                        {
                             TakeDamage(projectile.Damage);
-                        }
-                        if (charHealth <= 0)
-                        {
-                            b4Projectiles.Clear();
-                            screen = Screen.Lose;
-                        }
-                        else if (dodgeTime <= 0f)
-                        {
-                            EndTurn();
-                            dodgePhase = false;
-                            b4Projectiles.Clear();
-                            screen = Screen.Select;
-                            titleTime = 0f;
-                        }
-                        if (projectile._position.X < dodgeBoxR.Left - 350 || projectile._position.X > dodgeBoxR.Right + 350 || projectile._position.Y < dodgeBoxR.Top - 350 || projectile._position.Y > dodgeBoxR.Bottom + 350)
-                            b4Projectiles.RemoveAt(i);
+                    }
+
+                    dodgeTime -= dt;
+                    if (charHealth <= 0)
+                    {
+                        b4Projectiles.Clear();
+                        screen = Screen.Lose;
+                    }
+                    else if (dodgeTime <= 0f)
+                    {
+                        EndTurn();
+                        dodgePhase = false;
+                        b4Projectiles.Clear();
+                        screen = Screen.Select;
+                        titleTime = 0f;
                     }
                 }
             }
@@ -670,7 +666,10 @@ namespace JJK_Undertale_Final
                     b4Projectiles.Clear();
 
                     piercingBloodTimer = 0f;
-                    piercingBloodInterval = 0f;
+                    piercingBloodInterval = 1.1f;
+
+                    supernovaTimer = 0f;
+                    supernovaInterval = 0.28f;
 
                     rewardsGenerated = false;
                     rewardsAccepted = false;
@@ -848,6 +847,7 @@ namespace JJK_Undertale_Final
                         b1Projectiles.Clear();
                         b2Projectiles.Clear();
                         b3Projectiles.Clear();
+                        b4Projectiles.Clear();
 
                         b2AttackTime = 0f;
                         b2AttackAngle = 0f;
@@ -855,6 +855,9 @@ namespace JJK_Undertale_Final
                         b3AttackTimer = 0f;
                         b3PoisonDamageTimer = 0f;
                         b3WingKingNext = true;
+
+                        piercingBloodTimer = 0f;
+                        supernovaTimer = 0f;
                     }
 
                     playerAttack.Reset();
@@ -1088,8 +1091,8 @@ namespace JJK_Undertale_Final
                     }
                 }
             }
-                base.Update(gameTime);
-            }
+            base.Update(gameTime);
+        }
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
@@ -1553,36 +1556,38 @@ namespace JJK_Undertale_Final
                     direction.Normalize();
                 else
                     direction = Vector2.UnitY;
-
                 b3Projectiles.Add(new b3Projectile(spawnPosition, direction, b3Projectile.ProjectileType.RottingBlood, enemyAttacks[3]));
             }
         }
         void SpawnB4Projectiles1()
         {
             int side = random.Next(0, 4);
+
             Vector2 position = Vector2.Zero;
             Vector2 direction = Vector2.Zero;
-
             int x = random.Next(dodgeBoxR.Left + 20, dodgeBoxR.Right - 20);
             int y = random.Next(dodgeBoxR.Top + 20, dodgeBoxR.Bottom - 20);
 
-            switch(side)
+            switch (side)
             {
                 case 0:
                     position = new Vector2(dodgeBoxR.Left, y);
-                    direction = Vector2.UnitX; 
-                    break;
-                case 1:
-                    position = new Vector2(dodgeBoxR.Right, y);
                     direction = Vector2.UnitX;
                     break;
+
+                case 1:
+                    position = new Vector2(dodgeBoxR.Right, y);
+                    direction = -Vector2.UnitX;
+                    break;
+
                 case 2:
                     position = new Vector2(x, dodgeBoxR.Top);
                     direction = Vector2.UnitY;
                     break;
+
                 case 3:
                     position = new Vector2(x, dodgeBoxR.Bottom);
-                    direction = Vector2.UnitY;
+                    direction = -Vector2.UnitY;
                     break;
             }
             b4Projectiles.Add(new b4Projectile(position, direction, chosoHands, chosoCharge, chosoBeam, dodgeBoxR));
