@@ -61,6 +61,9 @@ namespace JJK_Undertale_Final
         List<b1Projectile> b1Projectiles = new List<b1Projectile>();
         List<b2Projectile> b2Projectiles = new List<b2Projectile>();
         List<b3Projectile> b3Projectiles = new List<b3Projectile>();
+        List<b4Projectile> b4Projectiles = new List<b4Projectile>();
+        List<Texture2D> supernovaFrames = new List<Texture2D>();
+        Texture2D chosoHands, chosoCharge, chosoBeam;
 
         int battleSkillIndex = 0;
         bool choosingBattleSkill = false;
@@ -71,6 +74,11 @@ namespace JJK_Undertale_Final
         int miracleTurns = 0;
         const int skillEffectDuration = 3;
         const int cursedEnergyRegen = 10;
+
+        float piercingBloodTimer = 0f;
+        float piercingBloodInterval = 1.1f;
+        float supernovaTimer = 0f;
+        float supernovaInterval = 0.28f;
 
         float b3AttackTimer = 0f;
         float b3AttackInterval = 2.5f;
@@ -165,6 +173,7 @@ namespace JJK_Undertale_Final
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/firstBattleCurse"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/Grasshopper"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/ChosoBrothers"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/Choso"));
 
             charHBarT = Content.Load<Texture2D>("charHealth");
             charCEBarT = Content.Load<Texture2D>("CEbar");
@@ -178,6 +187,7 @@ namespace JJK_Undertale_Final
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle1Bg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/b2Background"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle3Bg"));
+            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle4Bg"));
 
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/loseBg"));
 
@@ -224,6 +234,13 @@ namespace JJK_Undertale_Final
             enemyAttacks.Add(Content.Load<Texture2D>("EnemyMoves/b2Attack"));
             enemyAttacks.Add(Content.Load<Texture2D>("EnemyMoves/b3Attack1"));
             enemyAttacks.Add(Content.Load<Texture2D>("EnemyMoves/b3Attack2"));
+            chosoHands = Content.Load<Texture2D>("EnemyMoves/b4Attack1a");
+            chosoCharge = Content.Load<Texture2D>("EnemyMoves/b4Attack1b");
+            chosoBeam = Content.Load<Texture2D>("EnemyMoves/b4Attack1c");
+            supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2a"));
+            supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2b"));
+            supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2c"));
+            supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2d"));
 
 
             for (int i = 1; i < 6; i++)
@@ -545,6 +562,71 @@ namespace JJK_Undertale_Final
                         titleTime = 0f;
                     }
                 }
+                else if (battle == Battle.b4 && dodgePhase)
+                {
+                    Vector2 movement = gamePadCurrent.ThumbSticks.Left;
+                    movement.Y *= -1;
+
+                    if (movement.LengthSquared() > 1f)
+                        movement.Normalize();
+
+                    soulSpriteR.X += (int)(movement.X * currentSpeed * dt);
+                    soulSpriteR.Y += (int)(movement.Y * currentSpeed * dt);
+                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
+                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
+                    piercingBloodTimer += dt;
+
+                    if (piercingBloodTimer >= piercingBloodInterval)
+                    {
+                        SpawnB4Projectiles1();
+                        piercingBloodTimer -= piercingBloodInterval;
+                    }
+                    supernovaTimer += dt;
+                    if (supernovaTimer >= supernovaInterval)
+                    {
+                        SpawnB4Projectiles2();
+                        supernovaTimer -= supernovaInterval;
+                    }
+
+                    if (invincibilityTime > 0f)
+                        invincibilityTime -= dt;
+
+                    b3PoisonDamageTimer -= dt;
+
+                    Rectangle soulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y - 2, 12, 18);
+
+                    for (int i = b4Projectiles.Count - 1; i >= 0; i--)
+                    {
+                        b4Projectile projectile = b4Projectiles[i];
+                        projectile.Update(gameTime);
+
+                        if (projectile._isFinished)
+                        {
+                            b4Projectiles.RemoveAt(i);
+                            continue;
+                        }
+
+                        if (projectile.Collides(soulHitbox) && invincibilityTime <= 0f)
+                        {
+                            TakeDamage(projectile.Damage);
+                        }
+                        if (charHealth <= 0)
+                        {
+                            b4Projectiles.Clear();
+                            screen = Screen.Lose;
+                        }
+                        else if (dodgeTime <= 0f)
+                        {
+                            EndTurn();
+                            dodgePhase = false;
+                            b4Projectiles.Clear();
+                            screen = Screen.Select;
+                            titleTime = 0f;
+                        }
+                        if (projectile._position.X < dodgeBoxR.Left - 350 || projectile._position.X > dodgeBoxR.Right + 350 || projectile._position.Y < dodgeBoxR.Top - 350 || projectile._position.Y > dodgeBoxR.Bottom + 350)
+                            b4Projectiles.RemoveAt(i);
+                    }
+                }
             }
             else if (screen == Screen.Lose)
             {
@@ -585,6 +667,10 @@ namespace JJK_Undertale_Final
                     b1Projectiles.Clear();
                     b2Projectiles.Clear();
                     b3Projectiles.Clear();
+                    b4Projectiles.Clear();
+
+                    piercingBloodTimer = 0f;
+                    piercingBloodInterval = 0f;
 
                     rewardsGenerated = false;
                     rewardsAccepted = false;
@@ -880,13 +966,16 @@ namespace JJK_Undertale_Final
                     if (stage4Selecting && stage4Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
                         showStagesMenu = false;
-                        stage3Selecting = false;
+                        stage4Selecting = false;
                         stageSelecting = true;
                         screen = Screen.Battle;
                         battle = Battle.b4;
                         dodgePhase = true;
                         dodgeTime = 15f;
                         invincibilityTime = 0f;
+                        b4Projectiles.Clear();
+                        piercingBloodTimer = piercingBloodInterval;
+                        supernovaTimer = supernovaInterval;
 
                         enemyHealthMax = 400;
                         enemyHealth = enemyHealthMax;
@@ -999,8 +1088,8 @@ namespace JJK_Undertale_Final
                     }
                 }
             }
-            base.Update(gameTime);
-        }
+                base.Update(gameTime);
+            }
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
@@ -1088,6 +1177,29 @@ namespace JJK_Undertale_Final
                     _spriteBatch.DrawString(titleFont, "HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
                     foreach (b3Projectile projectile in b3Projectiles)
+                        projectile.Draw(_spriteBatch);
+                    if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
+                        _spriteBatch.Draw(soulSpirteT, new Rectangle(soulSpriteR.X, soulSpriteR.Y, 20, 20), Color.White);
+                    _spriteBatch.Draw(emptyBox, healthBox, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                }
+                else if (battle == Battle.b4)
+                {
+                    _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(enemyTextures[3], new Rectangle(600, 100, 300, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
+                    foreach (b4Projectile projectile in b4Projectiles)
                         projectile.Draw(_spriteBatch);
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
                         _spriteBatch.Draw(soulSpirteT, new Rectangle(soulSpriteR.X, soulSpriteR.Y, 20, 20), Color.White);
@@ -1190,6 +1302,33 @@ namespace JJK_Undertale_Final
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
+                else if (battle == Battle.b4)
+                {
+                    _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(enemyTextures[3], new Rectangle(600, 100, 300, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                    if (punchSelectingB)
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
+                    else
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
+                    _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
+                    _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    playerAttack.Draw(_spriteBatch);
+                    DrawBattleSkillSelector();
+                }
             }
             else if (screen == Screen.BattleRewards)
             {
@@ -1197,6 +1336,10 @@ namespace JJK_Undertale_Final
                     _spriteBatch.DrawString(titleFont, "You have defeated the grade 4 curse and got rewards!", new Vector2(150, 35), Color.White);
                 else if (battle == Battle.b2)
                     _spriteBatch.DrawString(titleFont, "You have defeated the Grasshopper Curse and got rewards!", new Vector2(140, 35), Color.White);
+                else if (battle == Battle.b3)
+                    _spriteBatch.DrawString(titleFont, "You have defeated Choso's Brothers and got rewards!", new Vector2(170, 35), Color.White);
+                else if (battle == Battle.b4)
+                    _spriteBatch.DrawString(titleFont, "You have defeated Choso and got rewards!", new Vector2(200, 35), Color.White);
                 _spriteBatch.DrawString(titleFont, "Press B to accept rewards then START to continue !", new Vector2(200, 90), Color.White);
                 DrawRewards();
             }
@@ -1412,6 +1555,44 @@ namespace JJK_Undertale_Final
                     direction = Vector2.UnitY;
 
                 b3Projectiles.Add(new b3Projectile(spawnPosition, direction, b3Projectile.ProjectileType.RottingBlood, enemyAttacks[3]));
+            }
+        }
+        void SpawnB4Projectiles1()
+        {
+            int side = random.Next(0, 4);
+            Vector2 position = Vector2.Zero;
+            Vector2 direction = Vector2.Zero;
+
+            int x = random.Next(dodgeBoxR.Left + 20, dodgeBoxR.Right - 20);
+            int y = random.Next(dodgeBoxR.Top + 20, dodgeBoxR.Bottom - 20);
+
+            switch(side)
+            {
+                case 0:
+                    position = new Vector2(dodgeBoxR.Left, y);
+                    direction = Vector2.UnitX; 
+                    break;
+                case 1:
+                    position = new Vector2(dodgeBoxR.Right, y);
+                    direction = Vector2.UnitX;
+                    break;
+                case 2:
+                    position = new Vector2(x, dodgeBoxR.Top);
+                    direction = Vector2.UnitY;
+                    break;
+                case 3:
+                    position = new Vector2(x, dodgeBoxR.Bottom);
+                    direction = Vector2.UnitY;
+                    break;
+            }
+            b4Projectiles.Add(new b4Projectile(position, direction, chosoHands, chosoCharge, chosoBeam, dodgeBoxR));
+        }
+        void SpawnB4Projectiles2()
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                Vector2 position = new Vector2(random.Next(dodgeBoxR.Left + 35, dodgeBoxR.Right - 35), random.Next(dodgeBoxR.Top + 35, dodgeBoxR.Bottom - 35));
+                b4Projectiles.Add(new b4Projectile(position, chosoCharge, supernovaFrames));
             }
         }
         void AddSkillandWeapons()

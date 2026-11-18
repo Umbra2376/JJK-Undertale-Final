@@ -52,6 +52,19 @@
 /processorParam:Version=3.8.5.1
 /build:Backgrounds/battle3Bg.png
 
+#begin Backgrounds/battle4Bg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:Backgrounds/battle4Bg
+
 #begin Backgrounds/loseBg.psd
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -363,6 +376,19 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:emptySlot
+
+#begin Enemies/Choso.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:Enemies/Choso.png
 
 #begin Enemies/chosoBrothers.png
 /importer:TextureImporter
