@@ -13,7 +13,7 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Backgrounds/b2Background.png
+#begin Backgrounds/battle1Bg.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -24,9 +24,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Backgrounds/b2Background.png
+/build:Backgrounds/battle1Bg.png
 
-#begin Backgrounds/battle1Bg.jpg
+#begin Backgrounds/battle2Bg.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -37,7 +37,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Backgrounds/battle1Bg.jpg
+/build:Backgrounds/battle2Bg.png
 
 #begin Backgrounds/battle3Bg.png
 /importer:TextureImporter
@@ -52,7 +52,7 @@
 /processorParam:Version=3.8.5.1
 /build:Backgrounds/battle3Bg.png
 
-#begin Backgrounds/battle4Bg
+#begin Backgrounds/battle4Bg.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -63,9 +63,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Backgrounds/battle4Bg
+/build:Backgrounds/battle4Bg.png
 
-#begin Backgrounds/loseBg.psd
+#begin Backgrounds/battle5Bg.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -76,9 +76,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Backgrounds/loseBg.psd
+/build:Backgrounds/battle5Bg.png
 
-#begin Backgrounds/menuBg.jfif
+#begin Backgrounds/loseBg.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -89,7 +89,20 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:Backgrounds/menuBg.jfif
+/build:Backgrounds/loseBg.png
+
+#begin Backgrounds/menuBg.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:Backgrounds/menuBg.png
 
 #begin CEbar.psd
 /importer:TextureImporter
@@ -429,6 +442,19 @@
 /processorParam:Version=3.8.5.1
 /build:Enemies/Grasshopper.psd
 
+#begin Enemies/kurourushi
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:Enemies/kurourushi
+
 #begin enemyHealth.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -494,7 +520,7 @@
 /processorParam:Version=3.8.5.1
 /build:EnemyMoves/b3Attack2.psd
 
-#begin EnemyMoves/b4Attack1a
+#begin EnemyMoves/b4Attack1a.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -505,7 +531,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:EnemyMoves/b4Attack1a
+/build:EnemyMoves/b4Attack1a.psd
 
 #begin EnemyMoves/b4Attack1b.png
 /importer:TextureImporter
@@ -584,6 +610,45 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:EnemyMoves/b4Attack2d.png
+
+#begin EnemyMoves/b5Attack1a
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:EnemyMoves/b5Attack1a
+
+#begin EnemyMoves/b5Attack1b
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:EnemyMoves/b5Attack1b
+
+#begin EnemyMoves/b5AttackProjectile
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:EnemyMoves/b5AttackProjectile
 
 #begin Fonts/JJKFont.ttf
 /copy:Fonts/JJKFont.ttf
@@ -3366,4 +3431,17 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:Weapons/yutaSword
+
+#begin X:/My Drive/Grade 12 Game Assets/Final Game Assets/Backgrounds/battle5Bg.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:X:/My Drive/Grade 12 Game Assets/Final Game Assets/Backgrounds/battle5Bg.png;Backgrounds/battle5Bg.png
 

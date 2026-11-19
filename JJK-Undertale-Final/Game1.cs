@@ -174,6 +174,7 @@ namespace JJK_Undertale_Final
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/Grasshopper"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/ChosoBrothers"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/Choso"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/kurourushi"));
 
             charHBarT = Content.Load<Texture2D>("charHealth");
             charCEBarT = Content.Load<Texture2D>("CEbar");
@@ -185,9 +186,10 @@ namespace JJK_Undertale_Final
 
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/menuBg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle1Bg"));
-            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/b2Background"));
+            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle2Bg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle3Bg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle4Bg"));
+            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle5Bg"));
 
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/loseBg"));
 
@@ -987,7 +989,24 @@ namespace JJK_Undertale_Final
                         choosingBattleSkill = false;
                         ResetBattleEffects();
                     }
+                    if (stage5Selecting && stage5Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
+                    {
+                        showStagesMenu = false;
+                        stage5Selecting = false;
+                        stageSelecting = true;
+                        screen = Screen.Battle;
+                        battle = Battle.b5;
+                        dodgePhase = true;
+                        dodgeTime = 15f;
+                        invincibilityTime = 0f;
 
+                        enemyHealthMax = 500;
+                        enemyHealth = enemyHealthMax;
+                        charHealth = charHealthMax;
+                        playerAttack.Reset();
+                        choosingBattleSkill = false;
+                        ResetBattleEffects();
+                    }
                 }
                 else if (showWeaponMenu)
                 {
@@ -1214,7 +1233,27 @@ namespace JJK_Undertale_Final
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
                 }
-
+                else if (battle == Battle.b5)
+                {
+                    _spriteBatch.Draw(backgrounds[5], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(enemyTextures[4], new Rectangle(600, 100, 300, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
+                    if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
+                        _spriteBatch.Draw(soulSpirteT, new Rectangle(soulSpriteR.X, soulSpriteR.Y, 20, 20), Color.White);
+                    _spriteBatch.Draw(emptyBox, healthBox, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                }
             }
             else if (screen == Screen.Select)
             {
@@ -1332,6 +1371,33 @@ namespace JJK_Undertale_Final
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
+                else if (battle == Battle.b5)
+                {
+                    _spriteBatch.Draw(backgrounds[5], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(enemyTextures[4], new Rectangle(600, 100, 300, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                    if (punchSelectingB)
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
+                    else
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
+                    _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
+                    _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    playerAttack.Draw(_spriteBatch);
+                    DrawBattleSkillSelector();
+                }
             }
             else if (screen == Screen.BattleRewards)
             {
@@ -1343,6 +1409,8 @@ namespace JJK_Undertale_Final
                     _spriteBatch.DrawString(titleFont, "You have defeated Choso's Brothers and got rewards!", new Vector2(170, 35), Color.White);
                 else if (battle == Battle.b4)
                     _spriteBatch.DrawString(titleFont, "You have defeated Choso and got rewards!", new Vector2(200, 35), Color.White);
+                else if (battle == Battle.b5)
+                    _spriteBatch.DrawString(titleFont, "You have defeated Kurourushi and got rewards!", new Vector2(190, 35), Color.White);
                 _spriteBatch.DrawString(titleFont, "Press B to accept rewards then START to continue !", new Vector2(200, 90), Color.White);
                 DrawRewards();
             }
@@ -1437,7 +1505,7 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Lose)
             {
-                _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                _spriteBatch.Draw(backgrounds[6], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
                 _spriteBatch.DrawString(titleFont, "Press START to restart", skipOption, Color.White);
             }
             if (screen == Screen.Battle || screen == Screen.Select)
