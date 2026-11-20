@@ -9,6 +9,7 @@ using System.Data;
 using System.Security.Cryptography.X509Certificates;
 using System.ComponentModel.Design;
 using System.Reflection.Metadata;
+using Microsoft.Xna.Framework.Audio;
 
 namespace JJK_Undertale_Final
 {
@@ -20,7 +21,8 @@ namespace JJK_Undertale_Final
         private Matrix _transformMatrix;
         Texture2D titleImg, dodgeBoxT, soulSpirteT, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, weaponSelection, skillSelection, barTexture;
         SpriteFont titleFont, stagesFont;
-        Song titleSong;
+        Song titleSong, menuSong;
+        SoundEffect punchSound, weaponSound;
         bool punchSelectingB = true, weaponSelectingB, skillSelectingB, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
         bool stage1Selecting, stage2Selecting, stage3Selecting, stage4Selecting, stage5Selecting, stage6Selecting, stage7Selecting, stage8Selecting, stage9Selecting, stage10Selecting;
         bool stage2Unlock, stage3Unlock, stage4Unlock, stage5Unlock, stage6Unlock, stage7Unlock, stage8Unlock, stage9Unlock, stage10Unlock;
@@ -52,6 +54,8 @@ namespace JJK_Undertale_Final
         List<Texture2D> skillIcons = new List<Texture2D>();
         List<Texture2D> weaponIcons = new List<Texture2D>();
         List<Texture2D> enemyTextures = new List<Texture2D>();
+        List<Song> battleSongs = new List<Song>();
+        List<SoundEffect> skillSounds = new List<SoundEffect>();
         List<Texture2D> backgrounds = new List<Texture2D>();
         List<Texture2D> punchAnimation = new List<Texture2D>();
         List<Texture2D> weaponAnimation = new List<Texture2D>();
@@ -164,6 +168,7 @@ namespace JJK_Undertale_Final
 
             titleImg = Content.Load<Texture2D>("titleScreen");
             titleSong = Content.Load<Song>("Sounds/titleTheme");
+            menuSong = Content.Load<Song>("Sounds/menuMusic");
             titleFont = Content.Load<SpriteFont>("titleFont");
             stagesFont = Content.Load<SpriteFont>("stagesFont");
             dodgeBoxT = Content.Load<Texture2D>("dodgeBox");
@@ -175,6 +180,12 @@ namespace JJK_Undertale_Final
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/ChosoBrothers"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/Choso"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/kurourushi"));
+
+            for (int i = 1; i < enemyTextures.Count; i++)
+                battleSongs.Add(Content.Load<Song>("Sounds/battle" + i + "Music"));
+
+            punchSound = Content.Load<SoundEffect>("Sounds/punchSound");
+            weaponSound = Content.Load<SoundEffect>("Sounds/weaponSound");
 
             charHBarT = Content.Load<Texture2D>("charHealth");
             charCEBarT = Content.Load<Texture2D>("CEbar");
@@ -270,6 +281,7 @@ namespace JJK_Undertale_Final
             playerAttack.AddAttack("invertedSpear", weaponAnimation, 110);
             RegisterSkills();
             MediaPlayer.Volume = 0.6f;
+            MediaPlayer.IsRepeating = true;
             // TODO: use this.Content to load your game content here
         }
 
@@ -343,6 +355,7 @@ namespace JJK_Undertale_Final
                     enemyHealth = enemyHealthMax;
                     playerAttack.Reset();
                     ResetBattleEffects();
+                    MediaPlayer.Stop();
                 }
             }
             else if (screen == Screen.Battle)
@@ -369,6 +382,11 @@ namespace JJK_Undertale_Final
 
                 if (battle == Battle.b1 && dodgePhase)
                 {
+                    if (MediaPlayer.State != MediaState.Playing)
+                    {
+                        MediaPlayer.IsRepeating = true;
+                        MediaPlayer.Play(battleSongs[0]);
+                    }
                     Vector2 movement = gamePadCurrent.ThumbSticks.Left;
                     movement.Y *= -1;
 
@@ -430,6 +448,11 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b2 && dodgePhase)
                 {
+                    if (MediaPlayer.State != MediaState.Playing)
+                    {
+                        MediaPlayer.IsRepeating = true;
+                        MediaPlayer.Play(battleSongs[1]);
+                    }
                     Vector2 movement = gamePadCurrent.ThumbSticks.Left;
                     movement.Y *= -1;
 
@@ -484,6 +507,11 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b3 && dodgePhase)
                 {
+                    if (MediaPlayer.State != MediaState.Playing)
+                    {
+                        MediaPlayer.IsRepeating = true;
+                        MediaPlayer.Play(battleSongs[2]);
+                    }
                     Vector2 movement = gamePadCurrent.ThumbSticks.Left;
                     movement.Y *= -1;
 
@@ -566,6 +594,11 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b4 && dodgePhase)
                 {
+                    if (MediaPlayer.State != MediaState.Playing)
+                    {
+                        MediaPlayer.IsRepeating = true;
+                        MediaPlayer.Play(battleSongs[3]);
+                    }
                     Vector2 movement = gamePadCurrent.ThumbSticks.Left;
                     movement.Y *= -1;
 
@@ -835,6 +868,7 @@ namespace JJK_Undertale_Final
                         choosingBattleSkill = false;
 
                         screen = Screen.BattleRewards;
+                        MediaPlayer.Stop();
                     }
                     else
                     {
@@ -867,6 +901,11 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.BattleRewards)
             {
+                if (MediaPlayer.State != MediaState.Playing)
+                {
+                    MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(menuSong);
+                }
                 if (!rewardsGenerated)
                     GenerateRewards();
                 AddSkillandWeapons();
@@ -923,6 +962,7 @@ namespace JJK_Undertale_Final
                         playerAttack.Reset();
                         choosingBattleSkill = false;
                         ResetBattleEffects();
+                        MediaPlayer.Stop();
                     }
                     if (stage2Selecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
@@ -944,6 +984,7 @@ namespace JJK_Undertale_Final
                         playerAttack.Reset();
                         choosingBattleSkill = false;
                         ResetBattleEffects();
+                        MediaPlayer.Stop();
                     }
 
                     if (stage3Selecting && stage3Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
@@ -967,6 +1008,7 @@ namespace JJK_Undertale_Final
                         playerAttack.Reset();
                         choosingBattleSkill = false;
                         ResetBattleEffects();
+                        MediaPlayer.Stop();
                     }
                     if (stage4Selecting && stage4Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
@@ -988,6 +1030,7 @@ namespace JJK_Undertale_Final
                         playerAttack.Reset();
                         choosingBattleSkill = false;
                         ResetBattleEffects();
+                        MediaPlayer.Stop();
                     }
                     if (stage5Selecting && stage5Unlock && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                     {
@@ -1006,6 +1049,7 @@ namespace JJK_Undertale_Final
                         playerAttack.Reset();
                         choosingBattleSkill = false;
                         ResetBattleEffects();
+                        MediaPlayer.Stop();
                     }
                 }
                 else if (showWeaponMenu)

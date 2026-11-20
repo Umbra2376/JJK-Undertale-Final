@@ -3227,12 +3227,75 @@
 /processorParam:Version=3.8.5.1
 /build:soulSprite.psd
 
+#begin Sounds/battle1Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle1Music.mp3
+
+#begin Sounds/battle2Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle2Music.mp3
+
+#begin Sounds/battle3Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle3Music.mp3
+
+#begin Sounds/battle4Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle4Music.mp3
+
+#begin Sounds/battle5Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle5Music.mp3
+
+#begin Sounds/blackFlashSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/blackFlashSound.mp3
+
+#begin Sounds/menuMusic.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/menuMusic.mp3
+
+#begin Sounds/punchSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/punchSound.mp3
+
 #begin Sounds/titleTheme.mp3
 /importer:Mp3Importer
 /processor:SongProcessor
 /processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
 /build:Sounds/titleTheme.mp3
+
+#begin Sounds/weaponSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/weaponSound.mp3
 
 #begin stagesFont.spritefont
 /importer:FontDescriptionImporter
@@ -3444,4 +3507,11 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:X:/My Drive/Grade 12 Game Assets/Final Game Assets/Backgrounds/battle5Bg.png;Backgrounds/battle5Bg.png
+
+#begin X:/My Drive/Grade 12 Game Assets/Final Game Assets/Sounds/titleTheme.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:X:/My Drive/Grade 12 Game Assets/Final Game Assets/Sounds/titleTheme.mp3;Sounds/titleTheme.mp3
 
