@@ -88,7 +88,7 @@ namespace JJK_Undertale_Final
         {
             if (IsAttacking)
                 return false;
-            bool blackFlash = random.Next(100) == 0;
+            bool blackFlash = random.Next(10) == 0;
 
             string attackName = blackFlash ? "blackFlash" : "punch";
 

@@ -223,6 +223,25 @@ namespace JJK_Undertale_Final
             skillIcons.Add(Content.Load<Texture2D>("SkillIcons/fugaIcon"));
             skillIcons.Add(Content.Load<Texture2D>("SkillIcons/purpleIcon"));
 
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/explodingFleshSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/strawDollSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/miracleSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/iceSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/bloodSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/projectionSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/ratioSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/RCTSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/rainbowDragonSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/bugArmourSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/graniteBlastSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/dismantleSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/cleaveSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/beastAmberSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/blueSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/redSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/fugaSound"));
+            skillSounds.Add(Content.Load<SoundEffect>("Sounds/purpleSound"));
+
             weaponIcons.Add(Content.Load<Texture2D>("Weapons/slaughterDemon"));
             weaponIcons.Add(Content.Load<Texture2D>("Weapons/harutaSword"));
             weaponIcons.Add(Content.Load<Texture2D>("Weapons/miwaSword"));
@@ -271,14 +290,14 @@ namespace JJK_Undertale_Final
             playerAttack.AddAttack("handSword", weaponAnimation, 30);
             playerAttack.AddAttack("basicKatana", weaponAnimation, 35);
             playerAttack.AddAttack("cursedSpear", weaponAnimation, 40);
-            playerAttack.AddAttack("ratioKnife", weaponAnimation, 50);
-            playerAttack.AddAttack("cursedSword", weaponAnimation, 60);
-            playerAttack.AddAttack("mallet", weaponAnimation, 45);
-            playerAttack.AddAttack("dragonBone", weaponAnimation, 75);
-            playerAttack.AddAttack("splitSoul", weaponAnimation, 80);
-            playerAttack.AddAttack("festeringLife", weaponAnimation, 90);
-            playerAttack.AddAttack("playfulCloud", weaponAnimation, 100);
-            playerAttack.AddAttack("invertedSpear", weaponAnimation, 110);
+            playerAttack.AddAttack("ratioKnife", weaponAnimation, 65);
+            playerAttack.AddAttack("cursedSword", weaponAnimation, 70);
+            playerAttack.AddAttack("mallet", weaponAnimation, 65);
+            playerAttack.AddAttack("dragonBone", weaponAnimation, 95);
+            playerAttack.AddAttack("splitSoul", weaponAnimation, 100);
+            playerAttack.AddAttack("festeringLife", weaponAnimation, 105);
+            playerAttack.AddAttack("playfulCloud", weaponAnimation, 125);
+            playerAttack.AddAttack("invertedSpear", weaponAnimation, 140);
             RegisterSkills();
             MediaPlayer.Volume = 0.6f;
             MediaPlayer.IsRepeating = true;
@@ -749,11 +768,17 @@ namespace JJK_Undertale_Final
                 if (!playerAttack.IsAttacking)
                 {
                     if (punchSelectingB && confirmPressed)
+                    {
                         playerAttack.StartPunch();
+                        punchSound.Play();
+                    }
                     else if (weaponSelectingB && confirmPressed)
                     {
                         if (!string.IsNullOrEmpty(selectedWeapon))
+                        {
                             playerAttack.StartWeapon(selectedWeapon);
+                            weaponSound.Play();
+                        }
                     }
                     else if (skillSelectingB)
                     {
@@ -779,7 +804,10 @@ namespace JJK_Undertale_Final
                             {
                                 string skill = equippedSkills[battleSkillIndex];
                                 if (playerAttack.StartSkill(skill, ref charCE))
+                                {
+                                    PlaySkillSound(skill);
                                     choosingBattleSkill = false;
+                                }
                             }
                         }
                     }
@@ -1256,7 +1284,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b4)
                 {
-                    _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.WhiteSmoke);
                     _spriteBatch.Draw(enemyTextures[3], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -2586,26 +2614,33 @@ namespace JJK_Undertale_Final
             }
             return frames;
         }
+        private void PlaySkillSound(string skill)
+        {
+            string[] skillNames = {"explodingFlesh", "strawDoll", "miracle", "ice", "blood", "projection", "ratio", "RCT", "curseControl", "bugArmour", "graniteBlast", "dismantle", "cleave", "beastAmber", "blue", "red", "fuga", "purple"};
+            int index = Array.IndexOf(skillNames, skill);
+            if (index >= 0 && index < skillSounds.Count)
+                skillSounds[index].Play();
+        }
         private void RegisterSkills()
         {
-            TryRegisterSkill("explodingFlesh", 7, 60, 45);
-            TryRegisterSkill("strawDoll", 6, 65, 50);
-            TryRegisterSkill("miracle", 6, 0, 55, charAttack.EffectType.Miracle);
-            TryRegisterSkill("ice", 6, 70, 70);
-            TryRegisterSkill("blood", 8, 75, 75);
-            TryRegisterSkill("projection", 9, 0, 60, charAttack.EffectType.Speed);
-            TryRegisterSkill("ratio", 8, 80, 80);
-            TryRegisterSkill("RCT", 9, 0, 90, charAttack.EffectType.Heal);
-            TryRegisterSkill("curseControl", 8, 90, 85);
-            TryRegisterSkill("bugArmour", 9, 0, 75, charAttack.EffectType.Defence);
-            TryRegisterSkill("graniteBlast", 8, 95, 90);
-            TryRegisterSkill("dismantle", 8, 100, 110);
-            TryRegisterSkill("cleave", 8, 110, 115);
-            TryRegisterSkill("beastAmber", 8, 125, 105);
-            TryRegisterSkill("blue", 9, 130, 120);
-            TryRegisterSkill("red", 9, 140, 130);
-            TryRegisterSkill("fuga", 9, 300, 250);
-            TryRegisterSkill("purple", 9, 400, 300);
+            TryRegisterSkill("explodingFlesh", 7, 35, 25);
+            TryRegisterSkill("strawDoll", 6, 30, 26);
+            TryRegisterSkill("miracle", 6, 0, 30, charAttack.EffectType.Miracle);
+            TryRegisterSkill("ice", 6, 70, 50);
+            TryRegisterSkill("blood", 8, 75, 55);
+            TryRegisterSkill("projection", 9, 0, 40, charAttack.EffectType.Speed);
+            TryRegisterSkill("ratio", 8, 80, 60);
+            TryRegisterSkill("RCT", 9, 0, 75, charAttack.EffectType.Heal);
+            TryRegisterSkill("curseControl", 8, 100, 85);
+            TryRegisterSkill("bugArmour", 9, 0, 55, charAttack.EffectType.Defence);
+            TryRegisterSkill("graniteBlast", 8, 105, 90);
+            TryRegisterSkill("dismantle", 8, 150, 110);
+            TryRegisterSkill("cleave", 8, 160, 115);
+            TryRegisterSkill("beastAmber", 8, 155, 105);
+            TryRegisterSkill("blue", 9, 140, 120);
+            TryRegisterSkill("red", 9, 180, 130);
+            TryRegisterSkill("fuga", 9, 450, 250);
+            TryRegisterSkill("purple", 9, 500, 300);
         }
         private void TryRegisterSkill(string name, int frames, int damage, int cursedEnergyCost, charAttack.EffectType effect = charAttack.EffectType.None)
         {

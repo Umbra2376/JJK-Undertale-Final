@@ -3262,12 +3262,82 @@
 /processorParam:Version=3.8.5.1
 /build:Sounds/battle5Music.mp3
 
+#begin Sounds/beastAmberSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/beastAmberSound.mp3
+
 #begin Sounds/blackFlashSound.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
 /build:Sounds/blackFlashSound.mp3
+
+#begin Sounds/bloodSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/bloodSound.mp3
+
+#begin Sounds/blueSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/blueSound.mp3
+
+#begin Sounds/bugArmourSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/bugArmourSound.mp3
+
+#begin Sounds/cleaveSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/cleaveSound.mp3
+
+#begin Sounds/dismantleSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/dismantleSound.mp3
+
+#begin Sounds/explodingFleshSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/explodingFleshSound.mp3
+
+#begin Sounds/fugaSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/fugaSound.mp3
+
+#begin Sounds/graniteBlastSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/graniteBlastSound.mp3
+
+#begin Sounds/iceSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/iceSound.mp3
 
 #begin Sounds/menuMusic.mp3
 /importer:Mp3Importer
@@ -3276,12 +3346,68 @@
 /processorParam:Version=3.8.5.1
 /build:Sounds/menuMusic.mp3
 
+#begin Sounds/miracleSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/miracleSound.mp3
+
+#begin Sounds/projectionSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/projectionSound.mp3
+
 #begin Sounds/punchSound.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
 /build:Sounds/punchSound.mp3
+
+#begin Sounds/purpleSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/purpleSound.mp3
+
+#begin Sounds/rainbowDragonSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/rainbowDragonSound.mp3
+
+#begin Sounds/ratioSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/ratioSound.mp3
+
+#begin Sounds/RCTSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/RCTSound.mp3
+
+#begin Sounds/redSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/redSound.mp3
+
+#begin Sounds/strawDollSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/strawDollSound.mp3
 
 #begin Sounds/titleTheme.mp3
 /importer:Mp3Importer
@@ -3494,24 +3620,3 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:Weapons/yutaSword
-
-#begin X:/My Drive/Grade 12 Game Assets/Final Game Assets/Backgrounds/battle5Bg.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/processorParam:Version=3.8.5.1
-/build:X:/My Drive/Grade 12 Game Assets/Final Game Assets/Backgrounds/battle5Bg.png;Backgrounds/battle5Bg.png
-
-#begin X:/My Drive/Grade 12 Game Assets/Final Game Assets/Sounds/titleTheme.mp3
-/importer:Mp3Importer
-/processor:SongProcessor
-/processorParam:Quality=Best
-/processorParam:Version=3.8.5.1
-/build:X:/My Drive/Grade 12 Game Assets/Final Game Assets/Sounds/titleTheme.mp3;Sounds/titleTheme.mp3
-
