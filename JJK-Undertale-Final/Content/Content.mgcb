@@ -3227,6 +3227,13 @@
 /processorParam:Version=3.8.5.1
 /build:soulSprite.psd
 
+#begin Sounds/battle10Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle10Music.mp3
+
 #begin Sounds/battle1Music.mp3
 /importer:Mp3Importer
 /processor:SongProcessor
@@ -3261,6 +3268,34 @@
 /processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
 /build:Sounds/battle5Music.mp3
+
+#begin Sounds/battle6Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle6Music.mp3
+
+#begin Sounds/battle7Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle7Music.mp3
+
+#begin Sounds/battle8Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle8Music.mp3
+
+#begin Sounds/battle9Music.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/battle9Music.mp3
 
 #begin Sounds/beastAmberSound.mp3
 /importer:Mp3Importer
@@ -3331,6 +3366,13 @@
 /processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
 /build:Sounds/graniteBlastSound.mp3
+
+#begin Sounds/hitSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:Sounds/hitSound.mp3
 
 #begin Sounds/iceSound.mp3
 /importer:Mp3Importer
@@ -3620,3 +3662,4 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:Weapons/yutaSword
+

@@ -22,7 +22,7 @@ namespace JJK_Undertale_Final
         Texture2D titleImg, dodgeBoxT, soulSpirteT, charHBarT, enemyHBarT, charCEBarT, emptyBox, punchSelection, weaponSelection, skillSelection, barTexture;
         SpriteFont titleFont, stagesFont;
         Song titleSong, menuSong;
-        SoundEffect punchSound, weaponSound;
+        SoundEffect punchSound, weaponSound, hitSound;
         bool punchSelectingB = true, weaponSelectingB, skillSelectingB, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
         bool stage1Selecting, stage2Selecting, stage3Selecting, stage4Selecting, stage5Selecting, stage6Selecting, stage7Selecting, stage8Selecting, stage9Selecting, stage10Selecting;
         bool stage2Unlock, stage3Unlock, stage4Unlock, stage5Unlock, stage6Unlock, stage7Unlock, stage8Unlock, stage9Unlock, stage10Unlock;
@@ -38,13 +38,13 @@ namespace JJK_Undertale_Final
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.Title;
+        Screen screen = Screen.Battle;
         Screen previousScreen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
         }
-        Battle battle = Battle.b1;
+        Battle battle = Battle.b5;
         List<string> skillList = new List<string>();
         List<string> equippedSkills = new List<string>();
         int skillMenuIndex = 0;
@@ -181,11 +181,12 @@ namespace JJK_Undertale_Final
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/Choso"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/kurourushi"));
 
-            for (int i = 1; i < enemyTextures.Count; i++)
+            for (int i = 1; i < 6; i++)
                 battleSongs.Add(Content.Load<Song>("Sounds/battle" + i + "Music"));
 
             punchSound = Content.Load<SoundEffect>("Sounds/punchSound");
             weaponSound = Content.Load<SoundEffect>("Sounds/weaponSound");
+            hitSound = Content.Load<SoundEffect>("Sounds/hitSound");
 
             charHBarT = Content.Load<Texture2D>("charHealth");
             charCEBarT = Content.Load<Texture2D>("CEbar");
@@ -432,6 +433,7 @@ namespace JJK_Undertale_Final
                         Rectangle projectileR = new Rectangle((int)projectile.Position.X - 12, (int)projectile.Position.Y - 12, 24, 24);
                         if (projectileR.Intersects(soulSpriteR) && invincibilityTime <= 0f)
                         {
+                            hitSound.Play();
                             TakeDamage(5);
                             b1Projectiles.RemoveAt(i);
                             particleEngine.Enabled = true;
@@ -500,6 +502,7 @@ namespace JJK_Undertale_Final
 
                         if (projectile.Hitbox.Intersects(b2SoulHitbox) && invincibilityTime <= 0f)
                         {
+                            hitSound.Play();
                             TakeDamage(10);
                             b2Projectiles.RemoveAt(i);
                             continue;
@@ -574,6 +577,7 @@ namespace JJK_Undertale_Final
 
                         if (projectile.Hitbox.Intersects(soulHitbox))
                         {
+                            hitSound.Play();
                             if (projectile.IsPoisonZone)
                             {
                                 if (b3PoisonDamageTimer <= 0f && invincibilityTime <= 0f)
@@ -659,9 +663,49 @@ namespace JJK_Undertale_Final
                             continue;
                         }
                         if (projectile.Collides(soulHitbox) && invincibilityTime <= 0f)
+                        {
+                            hitSound.Play();
                             TakeDamage(projectile.Damage);
+                        }
                     }
 
+                    dodgeTime -= dt;
+                    if (charHealth <= 0)
+                    {
+                        b4Projectiles.Clear();
+                        screen = Screen.Lose;
+                    }
+                    else if (dodgeTime <= 0f)
+                    {
+                        EndTurn();
+                        dodgePhase = false;
+                        b4Projectiles.Clear();
+                        screen = Screen.Select;
+                        titleTime = 0f;
+                    }
+                }
+                else if (battle == Battle.b5 && dodgePhase)
+                {
+                    if (MediaPlayer.State != MediaState.Playing)
+                    {
+                        MediaPlayer.IsRepeating = true;
+                        MediaPlayer.Play(battleSongs[4]);
+                    }
+                    Vector2 movement = gamePadCurrent.ThumbSticks.Left;
+                    movement.Y *= -1;
+
+                    if (movement.LengthSquared() > 1f)
+                        movement.Normalize();
+
+                    soulSpriteR.X += (int)(movement.X * currentSpeed * dt);
+                    soulSpriteR.Y += (int)(movement.Y * currentSpeed * dt);
+
+                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
+                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
+
+                    if (invincibilityTime > 0f)
+                        invincibilityTime -= dt;
+                    Rectangle soulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 1, 12, 18);
                     dodgeTime -= dt;
                     if (charHealth <= 0)
                     {
@@ -683,6 +727,8 @@ namespace JJK_Undertale_Final
                 if (gamePadCurrent.Buttons.BigButton == ButtonState.Pressed && gamePadOld.Buttons.BigButton == ButtonState.Released)
                 {
                     screen = Screen.Title;
+                    MediaPlayer.Stop();
+                    particleEngine.Enabled = false;
                     charHealthMax = 50;
                     charCE = 100;
                     enemyHealthMax = 100;
@@ -731,6 +777,7 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Select)
             {
+                particleEngine.Enabled = false;
                 float stickX = gamePadCurrent.ThumbSticks.Left.X;
                 float oldStickX = gamePadOld.ThumbSticks.Left.X;
 
@@ -942,6 +989,7 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Menu)
             {
+                particleEngine.Enabled = false;
                 if (!showSkillMenu && !showStagesMenu && !showWeaponMenu)
                     MoveInMenu();
                 if (stageSelecting && gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
