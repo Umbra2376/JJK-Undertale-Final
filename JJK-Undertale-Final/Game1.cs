@@ -38,13 +38,13 @@ namespace JJK_Undertale_Final
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.Battle;
+        Screen screen = Screen.Title;
         Screen previousScreen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
         }
-        Battle battle = Battle.b5;
+        Battle battle = Battle.b1;
         List<string> skillList = new List<string>();
         List<string> equippedSkills = new List<string>();
         int skillMenuIndex = 0;
@@ -300,7 +300,7 @@ namespace JJK_Undertale_Final
             playerAttack.AddAttack("playfulCloud", weaponAnimation, 125);
             playerAttack.AddAttack("invertedSpear", weaponAnimation, 140);
             RegisterSkills();
-            MediaPlayer.Volume = 0.6f;
+            MediaPlayer.Volume = 1f;
             MediaPlayer.IsRepeating = true;
             // TODO: use this.Content to load your game content here
         }
