@@ -10,6 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.ComponentModel.Design;
 using System.Reflection.Metadata;
 using Microsoft.Xna.Framework.Audio;
+using System.Linq;
 
 namespace JJK_Undertale_Final
 {
@@ -38,13 +39,13 @@ namespace JJK_Undertale_Final
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.Title;
+        Screen screen = Screen.Battle;
         Screen previousScreen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
         }
-        Battle battle = Battle.b1;
+        Battle battle = Battle.b5;
         List<string> skillList = new List<string>();
         List<string> equippedSkills = new List<string>();
         int skillMenuIndex = 0;
@@ -66,6 +67,8 @@ namespace JJK_Undertale_Final
         List<b2Projectile> b2Projectiles = new List<b2Projectile>();
         List<b3Projectile> b3Projectiles = new List<b3Projectile>();
         List<b4Projectile> b4Projectiles = new List<b4Projectile>();
+        List<b5Projectile> b5Projectiles = new List<b5Projectile>();
+        Texture2D kurourushiRoach, kurourushiSlash, kurourushiEgg;
         List<Texture2D> supernovaFrames = new List<Texture2D>();
         Texture2D chosoHands, chosoCharge, chosoBeam;
 
@@ -84,6 +87,12 @@ namespace JJK_Undertale_Final
         float supernovaTimer = 0f;
         float supernovaInterval = 0.28f;
 
+        float swarmTimer = 0f;
+        float swarmInterval = 2.5f;
+        float slashTimer = 0f;
+        float slashInterval = 2f;
+        float swarmAngle = 0f;
+
         float b3AttackTimer = 0f;
         float b3AttackInterval = 2.5f;
         bool b3WingKingNext = true;
@@ -99,7 +108,7 @@ namespace JJK_Undertale_Final
         float particleTime = 0f;
 
         float soulSpeed = 300f;
-        float dodgeTime = 1f;
+        float dodgeTime = 15f;
         int charHealth = 50, charHealthMax = 50;
         bool dodgePhase = true;
         int enemyHealth = 100, enemyHealthMax = 100;
@@ -117,8 +126,11 @@ namespace JJK_Undertale_Final
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
+            _graphics.PreferredBackBufferWidth = 1500;
+            _graphics.PreferredBackBufferHeight = 900;
+
             _graphics.IsFullScreen = true;
-            _graphics.ApplyChanges();
+            _graphics.HardwareModeSwitch = false;
         }
 
         protected override void Initialize()
@@ -127,9 +139,6 @@ namespace JJK_Undertale_Final
             particles = new List<Texture2D>();
 
             window = new Rectangle(0, 0, 1500, 900);
-            _graphics.PreferredBackBufferWidth = window.Width;
-            _graphics.PreferredBackBufferHeight = window.Height;
-            _graphics.ApplyChanges();
 
             openingText = new Vector2(50, 950);
             controlsText = new Vector2(50, 200);
@@ -274,6 +283,9 @@ namespace JJK_Undertale_Final
             supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2b"));
             supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2c"));
             supernovaFrames.Add(Content.Load<Texture2D>("EnemyMoves/b4Attack2d"));
+            kurourushiRoach = Content.Load<Texture2D>("EnemyMoves/b5AttackProjectile");
+            kurourushiSlash = Content.Load<Texture2D>("EnemyMoves/b5Attack1a");
+            kurourushiEgg = Content.Load<Texture2D>("EnemyMoves/b5Attack1b");
 
 
             for (int i = 1; i < 6; i++)
@@ -703,9 +715,39 @@ namespace JJK_Undertale_Final
                     soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
                     soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
 
+                    swarmTimer += dt;
+                    if (swarmTimer >= swarmInterval)
+                    {
+                        SpawnB5Projectiles1();
+                        swarmTimer -= swarmInterval;
+                    }
+
+                    slashTimer += dt;
+                    if (slashTimer >= slashInterval)
+                    {
+                        SpawnB5Projectiles2();
+                        slashTimer -= slashInterval;
+                    }
                     if (invincibilityTime > 0f)
                         invincibilityTime -= dt;
                     Rectangle soulHitbox = new Rectangle(soulSpriteR.X + 4, soulSpriteR.Y + 1, 12, 18);
+
+                    for (int i = b5Projectiles.Count - 1; i >= 0; i--)
+                    {
+                        b5Projectile projectile = b5Projectiles[i];
+                        projectile.Update(gameTime);
+
+                        if (projectile._isFinished)
+                        {
+                            b5Projectiles.RemoveAt(i);
+                            continue;
+                        }
+                        if (projectile.Collides(soulHitbox) && invincibilityTime <= 0f)
+                        {
+                            hitSound.Play();
+                            TakeDamage(projectile.Damage);
+                        }
+                    }
                     dodgeTime -= dt;
                     if (charHealth <= 0)
                     {
@@ -764,6 +806,7 @@ namespace JJK_Undertale_Final
                     b2Projectiles.Clear();
                     b3Projectiles.Clear();
                     b4Projectiles.Clear();
+                    ResetB5Attacks();
 
                     piercingBloodTimer = 0f;
                     piercingBloodInterval = 1.1f;
@@ -959,6 +1002,7 @@ namespace JJK_Undertale_Final
                         b2Projectiles.Clear();
                         b3Projectiles.Clear();
                         b4Projectiles.Clear();
+                        ResetB5Attacks();
 
                         b2AttackTime = 0f;
                         b2AttackAngle = 0f;
@@ -1364,6 +1408,8 @@ namespace JJK_Undertale_Final
                     _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
                     _spriteBatch.DrawString(titleFont, "HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
                     _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
+                    foreach (b5Projectile projectile in b5Projectiles)
+                        projectile.Draw(_spriteBatch);
                     if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
                         _spriteBatch.Draw(soulSpirteT, new Rectangle(soulSpriteR.X, soulSpriteR.Y, 20, 20), Color.White);
                     _spriteBatch.Draw(emptyBox, healthBox, Color.White);
@@ -1787,6 +1833,36 @@ namespace JJK_Undertale_Final
                 Vector2 position = new Vector2(random.Next(dodgeBoxR.Left + 35, dodgeBoxR.Right - 35), random.Next(dodgeBoxR.Top + 35, dodgeBoxR.Bottom - 35));
                 b4Projectiles.Add(new b4Projectile(position, chosoCharge, supernovaFrames));
             }
+        }
+        void SpawnB5Projectiles1()
+        {
+            Vector2 target = new Vector2(soulSpriteR.X + 10, soulSpriteR.Y + 10);
+
+            b5Projectiles.Add(new b5Projectile(target, swarmAngle, kurourushiRoach, dodgeBoxR));
+            swarmAngle += MathHelper.PiOver4;
+
+            if (swarmAngle >= MathHelper.TwoPi)
+                swarmAngle -= MathHelper.TwoPi;
+        }
+        void SpawnB5Projectiles2()
+        {
+            Vector2 target = new Vector2(soulSpriteR.X + 10, soulSpriteR.Y + 10);
+            float angle = random.Next(0, 4) * MathHelper.PiOver4;
+
+            b5Projectiles.Add(new b5Projectile(target, angle, kurourushiSlash, kurourushiEgg, kurourushiRoach, barTexture, dodgeBoxR));
+
+            if (enemyHealth <= enemyHealthMax * 0.3f)
+            {
+                b5Projectiles.Add(new b5Projectile(target, angle = MathHelper.PiOver2, kurourushiSlash, kurourushiEgg, kurourushiRoach, barTexture, dodgeBoxR));
+            }
+        }
+        void ResetB5Attacks()
+        {
+            b5Projectiles.Clear();
+
+            swarmTimer = 0f;
+            slashTimer = 0f;
+            swarmAngle = 0f;
         }
         void AddSkillandWeapons()
         {
@@ -2664,7 +2740,7 @@ namespace JJK_Undertale_Final
         }
         private void PlaySkillSound(string skill)
         {
-            string[] skillNames = {"explodingFlesh", "strawDoll", "miracle", "ice", "blood", "projection", "ratio", "RCT", "curseControl", "bugArmour", "graniteBlast", "dismantle", "cleave", "beastAmber", "blue", "red", "fuga", "purple"};
+            string[] skillNames = { "explodingFlesh", "strawDoll", "miracle", "ice", "blood", "projection", "ratio", "RCT", "curseControl", "bugArmour", "graniteBlast", "dismantle", "cleave", "beastAmber", "blue", "red", "fuga", "purple" };
             int index = Array.IndexOf(skillNames, skill);
             if (index >= 0 && index < skillSounds.Count)
                 skillSounds[index].Play();
