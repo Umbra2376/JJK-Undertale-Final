@@ -1,7 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Reflection;
 using System.Text;
 
 namespace JJK_Undertale_Final
@@ -82,6 +84,7 @@ namespace JJK_Undertale_Final
             _rotation = angle;
             _slashTexture = slashTexture;
             _eggTexture = eggTexture;
+            _roachTexture = roachTexture;
             _warningTexture = warningTexture;
             _dodgeBox = dodgeBox;
             _slashDirection = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
@@ -96,7 +99,7 @@ namespace JJK_Undertale_Final
 
             for (int side = -1; side <= 1; side += 2)
             {
-                for (int i = 0; i < 15; i ++)
+                for (int i = 0; i < 15; i++)
                 {
                     int lane = i % 5 - 2;
                     int row = i / 5;
@@ -105,7 +108,14 @@ namespace JJK_Undertale_Final
 
                     Cockroach roach = new Cockroach
                     {
-                        Position = start, Start = start, Control = control, Target = _position, Delay = row * 0.12f + (i % 5) * 0.025f, Curved = true, Active = false, Finished = false
+                        Position = start,
+                        Start = start,
+                        Control = control,
+                        Target = _position,
+                        Delay = row * 0.12f + (i % 5) * 0.025f,
+                        Curved = true,
+                        Active = false,
+                        Finished = false
                     };
                     _cockroaches.Add(roach);
                 }
@@ -125,14 +135,26 @@ namespace JJK_Undertale_Final
             {
                 float t1 = (_dodgeBox.Left - _position.X) / _slashDirection.X;
                 float t2 = (_dodgeBox.Right - _position.X) / _slashDirection.X;
+
                 minimum = Math.Max(minimum, Math.Min(t1, t2));
                 maximum = Math.Min(maximum, Math.Max(t1, t2));
             }
+
+            if (Math.Abs(_slashDirection.Y) > 0.0001f)
+            {
+                float t1 = (_dodgeBox.Top - _position.Y) / _slashDirection.Y;
+                float t2 = (_dodgeBox.Bottom - _position.Y) / _slashDirection.Y;
+
+                minimum = Math.Max(minimum, Math.Min(t1, t2));
+                maximum = Math.Min(maximum, Math.Max(t1, t2));
+            }
+
             _slashStart = _position + _slashDirection * minimum;
             _slashEnd = _position + _slashDirection * maximum;
+
             _slashLength = Vector2.Distance(_slashStart, _slashEnd);
 
-            for (int i = 1; i <= 5;  i++)
+            for (int i = 1; i <= 5; i++)
             {
                 Vector2 eggPosition = Vector2.Lerp(_slashStart, _slashEnd, i / 6f);
                 _eggs.Add(eggPosition);
@@ -167,7 +189,7 @@ namespace JJK_Undertale_Final
             if (_timer >= _swarmBurstTime && !_swarmBurst)
             {
                 _swarmBurst = true;
-                for (int i = 0; i < 12; i ++)
+                for (int i = 0; i < 12; i++)
                 {
                     float angle = i * MathHelper.TwoPi / 12f + _rotation;
                     SpawnStraightCockroach(_position, angle, _swarmBurstSpeed);
@@ -184,7 +206,7 @@ namespace JJK_Undertale_Final
 
                 foreach (Vector2 egg in _eggs)
                 {
-                    for (int i = 0;i < 4;  i ++)
+                    for (int i = 0; i < 4; i++)
                     {
                         float angle = _rotation + MathHelper.PiOver4 + i * MathHelper.PiOver2;
                         SpawnStraightCockroach(egg, angle, _eggProjectileSpeed);
@@ -199,7 +221,13 @@ namespace JJK_Undertale_Final
 
             Cockroach roach = new Cockroach
             {
-                Position = position, Direction = direction, Rotation = angle + MathHelper.PiOver2, Speed = speed, Curved = false, Active = true, Finished = false
+                Position = position,
+                Direction = direction,
+                Rotation = angle + MathHelper.PiOver2,
+                Speed = speed,
+                Curved = false,
+                Active = true,
+                Finished = false
             };
             _cockroaches.Add(roach);
         }
@@ -245,7 +273,7 @@ namespace JJK_Undertale_Final
         }
         public bool Collides(Rectangle soulHitbox)
         {
-            if (_isFinished) 
+            if (_isFinished)
                 return false;
             if (_type == AttackType.Slash)
             {
@@ -277,6 +305,59 @@ namespace JJK_Undertale_Final
         {
             Vector2 soulCenter = new Vector2(soulHitbox.Center.X, soulHitbox.Center.Y);
             Vector2 difference = soulCenter - _slashStart;
+            float projection = Vector2.Dot(difference, _slashDirection);
+            projection = MathHelper.Clamp(projection, 0f, _slashLength);
+            Vector2 closestPoint = _slashStart + _slashDirection * projection;
+            float distance = Vector2.Distance(soulCenter, closestPoint);
+            float soulRadius = Math.Max(soulHitbox.Width, soulHitbox.Height) / 2f;
+
+            return distance <= _slashThickness / 2f + soulRadius;
+        }
+        public void Draw(SpriteBatch spriteBatch)
+        {
+            if (_isFinished)
+                return;
+            if (_type == AttackType.Slash)
+                DrawSlash(spriteBatch);
+
+            DrawCockroaches(spriteBatch);
+        }
+        private void DrawCockroaches(SpriteBatch spriteBatch)
+        {
+            foreach (Cockroach roach in _cockroaches)
+            {
+                if (!roach.Active || roach.Finished)
+                    continue;
+                if (!_dodgeBox.Contains((int)roach.Position.X, (int)roach.Position.Y))
+                    continue;
+
+                spriteBatch.Draw(_roachTexture, roach.Position, null, Color.White, roach.Rotation, new Vector2(_roachTexture.Width / 2f, _roachTexture.Height / 2f), new Vector2(24f / _roachTexture.Width, 30f / _roachTexture.Height), SpriteEffects.None, 0f);
+            }
+        }
+        private void DrawSlash(SpriteBatch spriteBatch)
+        {
+            if (_timer < _slashChargeTime)
+            {
+                float progress = _timer / _slashChargeTime;
+                float opacity = MathHelper.Lerp(0.25f, 0.9f, progress);
+
+                spriteBatch.Draw(_warningTexture, _slashStart, null, Color.Red * opacity, _rotation, new Vector2(0f, _warningTexture.Height / 2f), new Vector2(_slashLength / _warningTexture.Width, 3f / _warningTexture.Height), SpriteEffects.None, 0f);
+            }
+            else if (_timer < _slashChargeTime + _slashAttackTime)
+            {
+                float progress = MathHelper.Clamp((_timer - _slashChargeTime) / _slashAttackTime, 0f, 1f);
+                float opacity = MathHelper.Lerp(1f, 0.5f, progress);
+
+                spriteBatch.Draw(_slashTexture, _slashStart, null, Color.White * opacity, _rotation, new Vector2(0f, _slashTexture.Height / 2f), new Vector2(_slashLength / _slashTexture.Width, _slashThickness / _slashTexture.Height), SpriteEffects.None, 0f);
+            }
+            else if (!_eggsHatched)
+            {
+                float progress = MathHelper.Clamp((_timer - _slashChargeTime - _slashAttackTime) / _eggHatchTime, 0f, 1f);
+                float pulse = 1f + (float)Math.Sin(_timer * 25f) * 0.1f * progress;
+
+                foreach (Vector2 egg in _eggs)
+                    spriteBatch.Draw(_eggTexture, egg, null, Color.White, 0f, new Vector2(_eggTexture.Width / 2f, _eggTexture.Height / 2f), new Vector2(18f / _eggTexture.Width * pulse, 24f / _eggTexture.Height * pulse), SpriteEffects.None, 0f);
+            }
         }
     }
 }
