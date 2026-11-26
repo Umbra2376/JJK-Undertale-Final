@@ -24,6 +24,7 @@ namespace JJK_Undertale_Final
         SpriteFont titleFont, stagesFont;
         Song titleSong, menuSong;
         SoundEffect punchSound, weaponSound, hitSound;
+        SoundEffectInstance hitInstance;
         bool punchSelectingB = true, weaponSelectingB, skillSelectingB, skillSelecting, stageSelecting = true, weaponSelecting, showSkillMenu, showWeaponMenu, showStagesMenu;
         bool stage1Selecting, stage2Selecting, stage3Selecting, stage4Selecting, stage5Selecting, stage6Selecting, stage7Selecting, stage8Selecting, stage9Selecting, stage10Selecting;
         bool stage2Unlock, stage3Unlock, stage4Unlock, stage5Unlock, stage6Unlock, stage7Unlock, stage8Unlock, stage9Unlock, stage10Unlock;
@@ -39,13 +40,13 @@ namespace JJK_Undertale_Final
         {
             Title, Opening, Menu, Battle, Select, BattleRewards, Win, Lose, Quit
         }
-        Screen screen = Screen.Battle;
+        Screen screen = Screen.Title;
         Screen previousScreen = Screen.Title;
         enum Battle
         {
             b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
         }
-        Battle battle = Battle.b5;
+        Battle battle = Battle.b1;
         List<string> skillList = new List<string>();
         List<string> equippedSkills = new List<string>();
         int skillMenuIndex = 0;
@@ -68,9 +69,9 @@ namespace JJK_Undertale_Final
         List<b3Projectile> b3Projectiles = new List<b3Projectile>();
         List<b4Projectile> b4Projectiles = new List<b4Projectile>();
         List<b5Projectile> b5Projectiles = new List<b5Projectile>();
-        Texture2D kurourushiRoach, kurourushiSlash, kurourushiEgg;
         List<Texture2D> supernovaFrames = new List<Texture2D>();
         Texture2D chosoHands, chosoCharge, chosoBeam;
+        Texture2D kurourushiRoach, kurourushiSlash, kurourushiEgg;
 
         int battleSkillIndex = 0;
         bool choosingBattleSkill = false;
@@ -88,9 +89,9 @@ namespace JJK_Undertale_Final
         float supernovaInterval = 0.28f;
 
         float swarmTimer = 0f;
-        float swarmInterval = 2.5f;
+        float swarmInterval = 1.5f;
         float slashTimer = 0f;
-        float slashInterval = 2f;
+        float slashInterval = 5f;
         float swarmAngle = 0f;
 
         float b3AttackTimer = 0f;
@@ -126,11 +127,12 @@ namespace JJK_Undertale_Final
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _graphics.PreferredBackBufferWidth = 1500;
-            _graphics.PreferredBackBufferHeight = 900;
+            _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
 
-            _graphics.IsFullScreen = true;
+            _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+
             _graphics.HardwareModeSwitch = false;
+            _graphics.IsFullScreen = true;
         }
 
         protected override void Initialize()
@@ -196,6 +198,7 @@ namespace JJK_Undertale_Final
             punchSound = Content.Load<SoundEffect>("Sounds/punchSound");
             weaponSound = Content.Load<SoundEffect>("Sounds/weaponSound");
             hitSound = Content.Load<SoundEffect>("Sounds/hitSound");
+            hitInstance = hitSound.CreateInstance();
 
             charHBarT = Content.Load<Texture2D>("charHealth");
             charCEBarT = Content.Load<Texture2D>("CEbar");
@@ -589,7 +592,7 @@ namespace JJK_Undertale_Final
 
                         if (projectile.Hitbox.Intersects(soulHitbox))
                         {
-                            hitSound.Play();
+                            hitInstance.Play();
                             if (projectile.IsPoisonZone)
                             {
                                 if (b3PoisonDamageTimer <= 0f && invincibilityTime <= 0f)
@@ -772,7 +775,7 @@ namespace JJK_Undertale_Final
                     MediaPlayer.Stop();
                     particleEngine.Enabled = false;
                     charHealthMax = 50;
-                    charCE = 100;
+                    charCEMax = 100;
                     enemyHealthMax = 100;
                     charHealth = charHealthMax;
                     charCE = charCEMax;
@@ -927,6 +930,7 @@ namespace JJK_Undertale_Final
                         {
                             stage2Unlock = true;
                             charHealthMax = 100;
+                            charCEMax = 100;
                         }
                         else if (battle == Battle.b2 && !stage3Unlock)
                         {
@@ -1285,7 +1289,7 @@ namespace JJK_Undertale_Final
 
             if (screen == Screen.Title)
             {
-                _spriteBatch.Draw(titleImg, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White * titleO);
+                _spriteBatch.Draw(titleImg, window, Color.White * titleO);
                 _spriteBatch.DrawString(titleFont, "Press START to start", startOption, Color.White);
             }
             else if (screen == Screen.Quit)
@@ -1301,7 +1305,7 @@ namespace JJK_Undertale_Final
             {
                 if (battle == Battle.b1)
                 {
-                    _spriteBatch.Draw(backgrounds[1], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[1], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1327,7 +1331,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b2)
                 {
-                    _spriteBatch.Draw(backgrounds[2], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[2], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[1], new Rectangle(550, 100, 400, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1353,7 +1357,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b3)
                 {
-                    _spriteBatch.Draw(backgrounds[3], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[3], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[2], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1376,7 +1380,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b4)
                 {
-                    _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.WhiteSmoke);
+                    _spriteBatch.Draw(backgrounds[4], window, Color.WhiteSmoke);
                     _spriteBatch.Draw(enemyTextures[3], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1399,7 +1403,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b5)
                 {
-                    _spriteBatch.Draw(backgrounds[5], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[5], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[4], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1425,7 +1429,7 @@ namespace JJK_Undertale_Final
             {
                 if (battle == Battle.b1)
                 {
-                    _spriteBatch.Draw(backgrounds[1], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[1], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[0], new Rectangle(550, 100, 400, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1458,7 +1462,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b2)
                 {
-                    _spriteBatch.Draw(backgrounds[2], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[2], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[1], new Rectangle(550, 100, 400, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1485,7 +1489,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b3)
                 {
-                    _spriteBatch.Draw(backgrounds[3], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[3], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[2], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1512,7 +1516,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b4)
                 {
-                    _spriteBatch.Draw(backgrounds[4], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[4], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[3], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1539,7 +1543,7 @@ namespace JJK_Undertale_Final
                 }
                 else if (battle == Battle.b5)
                 {
-                    _spriteBatch.Draw(backgrounds[5], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                    _spriteBatch.Draw(backgrounds[5], window, Color.White);
                     _spriteBatch.Draw(enemyTextures[4], new Rectangle(600, 100, 300, 300), Color.White);
                     _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
                     int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
@@ -1582,7 +1586,7 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Menu)
             {
-                _spriteBatch.Draw(backgrounds[0], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                _spriteBatch.Draw(backgrounds[0], window, Color.White);
                 if (skillSelecting)
                     _spriteBatch.Draw(menuOptions[0], skillsMenuR, Color.Yellow);
                 else
@@ -1671,7 +1675,7 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Lose)
             {
-                _spriteBatch.Draw(backgrounds[6], new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+                _spriteBatch.Draw(backgrounds[6], window, Color.White);
                 _spriteBatch.DrawString(titleFont, "Press START to restart", skipOption, Color.White);
             }
             if (screen == Screen.Battle || screen == Screen.Select)
@@ -1849,7 +1853,8 @@ namespace JJK_Undertale_Final
             Vector2 target = new Vector2(soulSpriteR.X + 10, soulSpriteR.Y + 10);
             float angle = random.Next(0, 4) * MathHelper.PiOver4;
 
-            b5Projectiles.Add(new b5Projectile(target, angle, kurourushiSlash, kurourushiEgg, kurourushiRoach, barTexture, dodgeBoxR));
+            b5Projectiles.Add(
+                new b5Projectile(target, angle, kurourushiSlash, kurourushiEgg, kurourushiRoach, barTexture, dodgeBoxR));
 
             if (enemyHealth <= enemyHealthMax * 0.3f)
             {
@@ -1958,7 +1963,7 @@ namespace JJK_Undertale_Final
         }
         void DrawRewards()
         {
-            _spriteBatch.Draw(dodgeBoxT, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+            _spriteBatch.Draw(dodgeBoxT, window, Color.White);
             if (skillRarity <= 55)
             {
                 if (obtainedSkill == 1)

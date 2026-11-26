@@ -611,7 +611,7 @@
 /processorParam:Version=3.8.5.1
 /build:EnemyMoves/b4Attack2d.png
 
-#begin EnemyMoves/b5Attack1a
+#begin EnemyMoves/b5Attack1a.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -622,9 +622,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:EnemyMoves/b5Attack1a
+/build:EnemyMoves/b5Attack1a.png
 
-#begin EnemyMoves/b5Attack1b
+#begin EnemyMoves/b5Attack1b.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -635,9 +635,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:EnemyMoves/b5Attack1b
+/build:EnemyMoves/b5Attack1b.psd
 
-#begin EnemyMoves/b5Attack1c.png
+#begin EnemyMoves/b5AttackProjectile.psd
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -648,20 +648,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
-/build:EnemyMoves/b5Attack1c.png
-
-#begin EnemyMoves/b5AttackProjectile
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/processorParam:Version=3.8.5.1
-/build:EnemyMoves/b5AttackProjectile
+/build:EnemyMoves/b5AttackProjectile.psd
 
 #begin Fonts/JJKFont.ttf
 /copy:Fonts/JJKFont.ttf
