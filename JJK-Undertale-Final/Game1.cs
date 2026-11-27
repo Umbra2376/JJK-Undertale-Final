@@ -11,6 +11,7 @@ using System.ComponentModel.Design;
 using System.Reflection.Metadata;
 using Microsoft.Xna.Framework.Audio;
 using System.Linq;
+using System.Transactions;
 
 namespace JJK_Undertale_Final
 {
@@ -191,8 +192,13 @@ namespace JJK_Undertale_Final
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/ChosoBrothers"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/Choso"));
             enemyTextures.Add(Content.Load<Texture2D>("Enemies/kurourushi"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/mahito"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/Jogo"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/kenjaku"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/mahoraga"));
+            enemyTextures.Add(Content.Load<Texture2D>("Enemies/Sukuna"));
 
-            for (int i = 1; i < 6; i++)
+            for (int i = 1; i <= 10; i++)
                 battleSongs.Add(Content.Load<Song>("Sounds/battle" + i + "Music"));
 
             punchSound = Content.Load<SoundEffect>("Sounds/punchSound");
@@ -209,12 +215,8 @@ namespace JJK_Undertale_Final
             enemyHBarT = Content.Load<Texture2D>("enemyHealth");
 
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/menuBg"));
-            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle1Bg"));
-            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle2Bg"));
-            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle3Bg"));
-            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle4Bg"));
-            backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle5Bg"));
-
+            for (int i = 1; i <= 10; i ++)
+                backgrounds.Add(Content.Load<Texture2D>("Backgrounds/battle" + i + "Bg"));
             backgrounds.Add(Content.Load<Texture2D>("Backgrounds/loseBg"));
 
             skillIcons.Add(Content.Load<Texture2D>("SkillIcons/explodingFleshIcon"));
@@ -754,14 +756,46 @@ namespace JJK_Undertale_Final
                     dodgeTime -= dt;
                     if (charHealth <= 0)
                     {
-                        b4Projectiles.Clear();
+                        ResetB5Attacks();
                         screen = Screen.Lose;
                     }
                     else if (dodgeTime <= 0f)
                     {
                         EndTurn();
                         dodgePhase = false;
-                        b4Projectiles.Clear();
+                        ResetB5Attacks();
+                        screen = Screen.Select;
+                        titleTime = 0f;
+                    }
+                }
+                else if (battle == Battle.b6 && dodgePhase)
+                {
+                    if (MediaPlayer.State != MediaState.Playing)
+                    {
+                        MediaPlayer.IsRepeating = true;
+                        MediaPlayer.Play(battleSongs[4]);
+                    }
+                    Vector2 movement = gamePadCurrent.ThumbSticks.Left;
+                    movement.Y *= -1;
+
+                    if (movement.LengthSquared() > 1f)
+                        movement.Normalize();
+
+                    soulSpriteR.X += (int)(movement.X * currentSpeed * dt);
+                    soulSpriteR.Y += (int)(movement.Y * currentSpeed * dt);
+
+                    soulSpriteR.X = Math.Clamp(soulSpriteR.X, dodgeBoxR.Left, dodgeBoxR.Right - 20);
+                    soulSpriteR.Y = Math.Clamp(soulSpriteR.Y, dodgeBoxR.Top, dodgeBoxR.Bottom - 20);
+
+                    dodgeTime -= dt;
+                    if (charHealth <= 0)
+                    {
+                        screen = Screen.Lose;
+                    }
+                    else if (dodgeTime <= 0f)
+                    {
+                        EndTurn();
+                        dodgePhase = false;
                         screen = Screen.Select;
                         titleTime = 0f;
                     }
@@ -829,12 +863,17 @@ namespace JJK_Undertale_Final
 
                 if (!playerAttack.IsAttacking && !choosingBattleSkill && stickX > 0.5f && oldStickX <= 0.5f)
                 {
-                    if (punchSelectingB)
+                    if (punchSelectingB && equippedSkills.Count != 0)
                     {
                         punchSelectingB = false;
                         skillSelectingB = true;
                     }
-                    else if (skillSelectingB)
+                    else if (punchSelectingB && equippedSkills.Count == 0)
+                    {
+                        punchSelectingB = false;
+                        weaponSelectingB = true;
+                    }
+                    else if (skillSelectingB && selectedWeapon != null)
                     {
                         skillSelectingB = false;
                         weaponSelectingB = true;
@@ -842,10 +881,15 @@ namespace JJK_Undertale_Final
                 }
                 else if (!playerAttack.IsAttacking && !choosingBattleSkill && stickX < -0.5f && oldStickX >= -0.5f)
                 {
-                    if (weaponSelectingB)
+                    if (weaponSelectingB && equippedSkills.Count != 0)
                     {
                         weaponSelectingB = false;
                         skillSelectingB = true;
+                    }
+                    else if (weaponSelectingB && equippedSkills.Count == 0)
+                    {
+                        weaponSelectingB = false;
+                        punchSelectingB = true;
                     }
                     else if (skillSelectingB)
                     {
@@ -1216,8 +1260,7 @@ namespace JJK_Undertale_Final
                                 weaponMenuIndex = weaponList.Count - 1;
                         }
 
-                        if (gamePadCurrent.Buttons.B == ButtonState.Pressed &&
-                            gamePadOld.Buttons.B == ButtonState.Released)
+                        if (gamePadCurrent.Buttons.B == ButtonState.Pressed && gamePadOld.Buttons.B == ButtonState.Released)
                         {
                             string weapon = weaponList[weaponMenuIndex];
                             selectedWeapon = selectedWeapon == weapon ? "" : weapon;
@@ -1424,6 +1467,28 @@ namespace JJK_Undertale_Final
                     _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
                     _spriteBatch.Draw(charHBarT, charHR, Color.White);
                 }
+                else if (battle == Battle.b6)
+                {
+                    _spriteBatch.Draw(backgrounds[6], window, Color.White);
+                    _spriteBatch.Draw(enemyTextures[5], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(dodgeBoxT, dodgeBoxR, Color.White * titleO);
+
+                    if (invincibilityTime <= 0f || (int)(invincibilityTime * 10) % 2 == 0)
+                        _spriteBatch.Draw(soulSpirteT, new Rectangle(soulSpriteR.X, soulSpriteR.Y, 20, 20), Color.White);
+                    _spriteBatch.Draw(emptyBox, healthBox, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                }
             }
             else if (screen == Screen.Select)
             {
@@ -1449,14 +1514,12 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
                     else
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
-                    if (weaponSelectingB)
-                        _spriteBatch.Draw(weaponSelection, weaponOptionR, Color.Yellow);
-                    else
-                        _spriteBatch.Draw(weaponSelection, weaponOptionR, Color.White);
-                    if (skillSelectingB)
-                        _spriteBatch.Draw(skillSelection, skillOptionR, Color.Yellow);
-                    else
-                        _spriteBatch.Draw(skillSelection, skillOptionR, Color.White);
+                    _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
+                    _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    if (equippedSkills.Count == 0)
+                        _spriteBatch.Draw(menuOptions[13], skillOptionR, Color.White * 0.3f);
+                    if (selectedWeapon == null)
+                        _spriteBatch.Draw(menuOptions[13], weaponOptionR, Color.White * 0.3f);
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
@@ -1484,6 +1547,10 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
                     _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
                     _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    if (equippedSkills.Count == 0)
+                        _spriteBatch.Draw(menuOptions[13], skillOptionR, Color.White * 0.3f);
+                    if (selectedWeapon == null)
+                        _spriteBatch.Draw(menuOptions[13], weaponOptionR, Color.White * 0.3f);
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
@@ -1511,6 +1578,10 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
                     _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
                     _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    if (equippedSkills.Count == 0)
+                        _spriteBatch.Draw(menuOptions[13], skillOptionR, Color.White * 0.3f);
+                    if (selectedWeapon == null)
+                        _spriteBatch.Draw(menuOptions[13], weaponOptionR, Color.White * 0.3f);
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
@@ -1538,6 +1609,10 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
                     _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
                     _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    if (equippedSkills.Count == 0)
+                        _spriteBatch.Draw(menuOptions[13], skillOptionR, Color.White * 0.3f);
+                    if (selectedWeapon == null)
+                        _spriteBatch.Draw(menuOptions[13], weaponOptionR, Color.White * 0.3f);
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
@@ -1565,6 +1640,41 @@ namespace JJK_Undertale_Final
                         _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
                     _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
                     _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    if (equippedSkills.Count == 0)
+                        _spriteBatch.Draw(menuOptions[13], skillOptionR, Color.White * 0.3f);
+                    if (selectedWeapon == null)
+                        _spriteBatch.Draw(menuOptions[13], weaponOptionR, Color.White * 0.3f);
+                    playerAttack.Draw(_spriteBatch);
+                    DrawBattleSkillSelector();
+                }
+                else if (battle == Battle.b6)
+                {
+                    _spriteBatch.Draw(backgrounds[6], window, Color.White);
+                    _spriteBatch.Draw(enemyTextures[5], new Rectangle(550, 100, 400, 300), Color.White);
+                    _spriteBatch.Draw(barTexture, enemyHBarR, Color.DarkRed);
+                    int enemyBarWidth = (int)(enemyHBarR.Width * ((float)enemyHealth / enemyHealthMax));
+
+                    if (enemyBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(enemyHBarR.X, enemyHBarR.Y, enemyBarWidth, enemyHBarR.Height), Color.Red);
+                    _spriteBatch.Draw(enemyHBarT, enemyHR, Color.White);
+                    _spriteBatch.DrawString(titleFont, "Enemy HP: " + enemyHealth + "/" + enemyHealthMax, new Vector2(50, 35), Color.White);
+                    _spriteBatch.Draw(emptyBox, battleMenu, Color.White);
+                    _spriteBatch.Draw(barTexture, charHBarR, Color.DarkRed);
+                    int playerBarWidth = (int)(charHBarR.Width * ((float)charHealth / charHealthMax));
+                    if (playerBarWidth > 0)
+                        _spriteBatch.Draw(barTexture, new Rectangle(charHBarR.X, charHBarR.Y, playerBarWidth, charHBarR.Height), Color.Green);
+                    _spriteBatch.DrawString(titleFont, "HP: " + charHealth + "/" + charHealthMax, new Vector2(50, 800), Color.White);
+                    _spriteBatch.Draw(charHBarT, charHR, Color.White);
+                    if (punchSelectingB)
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.Yellow);
+                    else
+                        _spriteBatch.Draw(punchSelection, punchOptionR, Color.White);
+                    _spriteBatch.Draw(weaponSelection, weaponOptionR, weaponSelectingB ? Color.Yellow : Color.White);
+                    _spriteBatch.Draw(skillSelection, skillOptionR, skillSelectingB ? Color.Yellow : Color.White);
+                    if (equippedSkills.Count == 0)
+                        _spriteBatch.Draw(menuOptions[13], skillOptionR, Color.White * 0.3f);
+                    if (selectedWeapon == null)
+                        _spriteBatch.Draw(menuOptions[13], weaponOptionR, Color.White * 0.3f);
                     playerAttack.Draw(_spriteBatch);
                     DrawBattleSkillSelector();
                 }
@@ -1675,7 +1785,7 @@ namespace JJK_Undertale_Final
             }
             else if (screen == Screen.Lose)
             {
-                _spriteBatch.Draw(backgrounds[6], window, Color.White);
+                _spriteBatch.Draw(backgrounds[11], window, Color.White);
                 _spriteBatch.DrawString(titleFont, "Press START to restart", skipOption, Color.White);
             }
             if (screen == Screen.Battle || screen == Screen.Select)
@@ -2603,10 +2713,7 @@ namespace JJK_Undertale_Final
                 int iconIndex = GetWeaponIconIndex(weaponList[i]);
                 if (iconIndex != -1)
                     _spriteBatch.Draw(weaponIcons[iconIndex], new Rectangle(x + 25, y + 15, 150, 105), Color.White);
-
-                _spriteBatch.DrawString(stagesFont,
-                    GetWeaponName(weaponList[i]),
-                    new Vector2(x + 10, y + 130), Color.White);
+                _spriteBatch.DrawString(stagesFont, GetWeaponName(weaponList[i]), new Vector2(x + 10, y + 130), Color.White);
 
                 if (selectedWeapon == weaponList[i])
                     _spriteBatch.DrawString(stagesFont, "EQUIPPED", new Vector2(x + 10, y + 155), Color.Green);
